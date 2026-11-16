@@ -33,7 +33,7 @@
     padding: 0;
     width: 100%;
     min-height: 100%;
-    background: linear-gradient(180deg, #bae6fd 0%, #e0f2fe 45%, #f1f5f9 100%);
+    background: linear-gradient(180deg, #0f172a 0%, #1e293b 42%, #f1f5f9 42.1%, #f8fafc 100%);
     color: var(--text-dark);
     font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     overflow-x: hidden;
@@ -47,7 +47,8 @@
     min-height: 560px;
     max-height: 980px;
     overflow: hidden;
-    box-shadow: 0 18px 48px rgba(15, 23, 42, 0.18);
+    background: #0f172a;
+    box-shadow: 0 22px 56px rgba(15, 23, 42, 0.32);
   }
 
   #game-canvas {
@@ -59,15 +60,39 @@
   }
   #game-canvas:active { cursor: grabbing; }
 
+  /* 화면 외곽 상태 비네트 (피격 / 빙결 / RUSH 연출) */
+  #screen-fx-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 11;
+    display: flex;
+  }
+  .fx-pane {
+    flex: 1;
+    height: 100%;
+    transition: box-shadow 0.14s ease-out;
+  }
+  .fx-pane.hidden { display: none; }
+  .fx-pane.hit-flash {
+    box-shadow: inset 0 0 72px rgba(244, 63, 94, 0.72);
+  }
+  .fx-pane.chill-tint {
+    box-shadow: inset 0 0 64px rgba(56, 189, 248, 0.52);
+  }
+  .fx-pane.rush-aura {
+    box-shadow: inset 0 0 80px rgba(250, 204, 21, 0.58);
+  }
+
   #split-divider {
     position: absolute;
     top: 0;
     bottom: 0;
     left: 50%;
-    width: 4px;
+    width: 5px;
     transform: translateX(-50%);
-    background: linear-gradient(180deg, #f59e0b, #ffffff, #0284c7);
-    box-shadow: 0 0 18px rgba(15, 23, 42, 0.65);
+    background: linear-gradient(180deg, #f59e0b 0%, #ffffff 50%, #0284c7 100%);
+    box-shadow: 0 0 22px rgba(15, 23, 42, 0.85), 0 0 10px rgba(250, 204, 21, 0.8);
     z-index: 12;
     pointer-events: none;
     display: none;
@@ -91,17 +116,17 @@
 
   .player-hud-card {
     flex: 1;
-    max-width: 440px;
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(10px);
-    border: 2px solid rgba(2, 132, 199, 0.35);
+    max-width: 450px;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.88) 0%, rgba(30, 41, 59, 0.84) 100%);
+    backdrop-filter: blur(12px);
+    border: 2px solid rgba(56, 189, 248, 0.55);
     border-radius: 16px;
-    padding: 8px 12px;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.14);
-    color: var(--text-dark);
+    padding: 9px 13px;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    color: #f8fafc;
   }
   .player-hud-card.p2 {
-    border-color: rgba(244, 63, 94, 0.38);
+    border-color: rgba(251, 113, 133, 0.58);
     text-align: right;
   }
 
@@ -110,21 +135,26 @@
     align-items: center;
     justify-content: space-between;
     gap: 6px;
-    margin-bottom: 5px;
+    margin-bottom: 6px;
     font-size: 13px;
     font-weight: 900;
+    letter-spacing: 0.02em;
   }
   .player-hud-card.p2 .hud-header-line { flex-direction: row-reverse; }
 
   .slot-pill {
     font-size: 10px;
     font-weight: 900;
-    padding: 2px 7px;
+    padding: 2px 8px;
     border-radius: 999px;
-    background: #0284c7;
+    background: linear-gradient(135deg, #0284c7, #38bdf8);
     color: #fff;
+    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.5);
   }
-  .player-hud-card.p2 .slot-pill { background: #f43f5e; }
+  .player-hud-card.p2 .slot-pill {
+    background: linear-gradient(135deg, #e11d48, #fb7185);
+    box-shadow: 0 2px 8px rgba(225, 29, 72, 0.5);
+  }
 
   .weapon-badges {
     display: inline-flex;
@@ -133,49 +163,66 @@
     font-weight: 800;
   }
   .w-badge {
-    padding: 2px 6px;
+    padding: 2px 7px;
     border-radius: 6px;
-    background: #f1f5f9;
-    border: 1px solid #cbd5e1;
-    color: #334155;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    color: #e2e8f0;
   }
 
-  .round-dots { display: inline-flex; gap: 4px; }
+  .round-dots { display: inline-flex; gap: 5px; }
   .r-dot {
-    width: 10px;
-    height: 10px;
+    width: 11px;
+    height: 11px;
     border-radius: 50%;
-    background: #e2e8f0;
-    border: 1.5px solid #94a3b8;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1.5px solid #64748b;
   }
   .r-dot.won {
-    background: #f59e0b;
-    border-color: #b45309;
-    box-shadow: 0 0 8px rgba(245, 158, 11, 0.75);
+    background: radial-gradient(circle at 35% 35%, #fef08a, #f59e0b);
+    border-color: #fde047;
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.9);
   }
 
   .hp-bar-outer {
     position: relative;
     width: 100%;
-    height: 15px;
-    background: #e2e8f0;
+    height: 17px;
+    background: rgba(15, 23, 42, 0.9);
     border-radius: 999px;
     overflow: hidden;
-    border: 1px solid #cbd5e1;
+    border: 1.5px solid rgba(255, 255, 255, 0.22);
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.6);
+  }
+  .hp-bar-trail {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #fde047, #f59e0b);
+    transition: width 0.48s cubic-bezier(0.22, 1, 0.36, 1) 0.1s;
+  }
+  .player-hud-card.p2 .hp-bar-trail {
+    left: auto;
+    right: 0;
   }
   .hp-bar-inner {
+    position: relative;
     height: 100%;
     width: 100%;
     border-radius: 999px;
-    background: linear-gradient(90deg, #0284c7, #06b6d4);
+    background: linear-gradient(180deg, #38bdf8 0%, #0284c7 55%, #0369a1 100%);
+    box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.45);
     transition: width 0.12s ease-out;
   }
   .player-hud-card.p2 .hp-bar-inner {
     margin-left: auto;
-    background: linear-gradient(90deg, #e11d48, #fb7185);
+    background: linear-gradient(180deg, #fb7185 0%, #e11d48 55%, #be123c 100%);
   }
   .hp-bar-inner.danger {
-    background: linear-gradient(90deg, #dc2626, #f97316) !important;
+    background: linear-gradient(180deg, #fb923c 0%, #dc2626 60%, #991b1b 100%) !important;
   }
   .hp-bar-label {
     position: absolute;
@@ -183,17 +230,18 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 10px;
+    font-size: 10.5px;
     font-weight: 900;
-    color: #0f172a;
-    text-shadow: 0 0 4px rgba(255, 255, 255, 0.9);
+    color: #ffffff;
+    text-shadow: 0 1px 3px rgba(15, 23, 42, 0.95);
+    letter-spacing: 0.04em;
   }
 
   .sub-bars-row {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-top: 6px;
+    margin-top: 7px;
   }
   .player-hud-card.p2 .sub-bars-row { flex-direction: row-reverse; }
   .gauge-pair {
@@ -203,53 +251,61 @@
     gap: 5px;
     font-size: 10px;
     font-weight: 800;
-    color: #475569;
+    color: #cbd5e1;
   }
   .player-hud-card.p2 .gauge-pair { flex-direction: row-reverse; }
   .gauge-track {
     flex: 1;
     height: 7px;
-    background: #e2e8f0;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 999px;
     overflow: hidden;
   }
   .rush-fill {
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, #3b82f6, #06b6d4);
+    background: linear-gradient(90deg, #3b82f6, #22d3ee);
+    transition: width 0.15s ease-out;
   }
   .rush-fill.ready {
-    background: linear-gradient(90deg, #f59e0b, #facc15);
-    box-shadow: 0 0 8px #f59e0b;
+    background: linear-gradient(90deg, #f59e0b, #fef08a, #f59e0b);
+    box-shadow: 0 0 12px #facc15;
+    animation: rushPulse 0.75s infinite alternate;
+  }
+  @keyframes rushPulse {
+    from { filter: brightness(1); }
+    to { filter: brightness(1.35); }
   }
   .dash-fill {
     height: 100%;
     width: 100%;
-    background: linear-gradient(90deg, #10b981, #34d399);
+    background: linear-gradient(90deg, #10b981, #6ee7b7);
   }
 
   .hud-clock-box {
-    background: rgba(15, 23, 42, 0.9);
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.94), rgba(30, 41, 59, 0.92));
     color: #ffffff;
     border: 2px solid #f59e0b;
     border-radius: 16px;
-    padding: 6px 12px;
+    padding: 6px 13px;
     text-align: center;
-    min-width: 92px;
+    min-width: 96px;
     pointer-events: auto;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.25);
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
   }
   .hud-stage-tag {
     font-size: 9px;
-    font-weight: 800;
+    font-weight: 900;
     color: #fde047;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.07em;
   }
   #clock-num {
-    font-size: 24px;
+    font-size: 25px;
     font-weight: 900;
     line-height: 1.05;
     font-variant-numeric: tabular-nums;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
   }
   #clock-num.urgent { color: #fb7185; }
   .hud-mini-btns {
@@ -268,7 +324,7 @@
     border-radius: 6px;
     cursor: pointer;
   }
-  .mini-icon-btn:hover { background: rgba(245, 158, 11, 0.35); }
+  .mini-icon-btn:hover { background: rgba(245, 158, 11, 0.45); }
 
   #damage-popups {
     position: absolute;
@@ -280,36 +336,38 @@
   .dmg-popup {
     position: absolute;
     font-weight: 900;
-    font-size: 18px;
+    font-size: 20px;
+    letter-spacing: 0.03em;
     color: #ffffff;
-    text-shadow: 0 2px 6px rgba(15, 23, 42, 0.95), 0 0 10px rgba(245, 158, 11, 0.8);
+    text-shadow: 0 2px 6px rgba(15, 23, 42, 0.98), 0 0 12px rgba(245, 158, 11, 0.9);
     transform: translate(-50%, -50%);
-    animation: popFloat 0.72s ease-out forwards;
+    animation: popFloat 0.74s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     white-space: nowrap;
   }
   @keyframes popFloat {
-    0% { opacity: 1; transform: translate(-50%, -30%) scale(0.75); }
-    25% { opacity: 1; transform: translate(-50%, -70%) scale(1.18); }
-    100% { opacity: 0; transform: translate(-50%, -145%) scale(0.95); }
+    0% { opacity: 1; transform: translate(-50%, -25%) scale(0.7); }
+    24% { opacity: 1; transform: translate(-50%, -75%) scale(1.25); }
+    100% { opacity: 0; transform: translate(-50%, -155%) scale(0.95); }
   }
 
   #center-banner {
     position: absolute;
     top: 40%;
     left: 50%;
-    transform: translate(-50%, -50%) scale(0.88);
+    transform: translate(-50%, -50%) scale(0.86);
     font-size: clamp(28px, 6vw, 58px);
     font-weight: 900;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
     color: #ffffff;
-    background: linear-gradient(90deg, rgba(15, 23, 42, 0.85), rgba(2, 132, 199, 0.85));
-    padding: 10px 28px;
+    background: linear-gradient(90deg, rgba(15, 23, 42, 0.92), rgba(2, 132, 199, 0.9), rgba(15, 23, 42, 0.92));
+    padding: 12px 32px;
     border-radius: 999px;
-    border: 2px solid #fde047;
-    box-shadow: 0 12px 36px rgba(15, 23, 42, 0.45);
+    border: 2.5px solid #fde047;
+    box-shadow: 0 14px 42px rgba(15, 23, 42, 0.55), 0 0 24px rgba(245, 158, 11, 0.45);
+    text-shadow: 0 3px 10px rgba(0, 0, 0, 0.65);
     pointer-events: none;
     opacity: 0;
-    transition: opacity 0.2s ease, transform 0.2s ease;
+    transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     z-index: 22;
     white-space: nowrap;
   }
@@ -320,16 +378,17 @@
 
   #callout-toast {
     position: absolute;
-    top: 102px;
+    top: 106px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(15, 23, 42, 0.88);
+    background: rgba(15, 23, 42, 0.92);
     border: 1.5px solid #f59e0b;
     color: #fef08a;
-    padding: 4px 14px;
+    padding: 5px 16px;
     border-radius: 999px;
     font-size: 12px;
     font-weight: 900;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.16s ease;
@@ -345,7 +404,7 @@
     flex-direction: column;
     justify-content: space-between;
     padding: 14px 18px 18px;
-    background: linear-gradient(180deg, rgba(255,255,255,0.68) 0%, rgba(255,255,255,0.12) 45%, rgba(15,23,42,0.72) 100%);
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.42) 0%, rgba(15, 23, 42, 0.04) 44%, rgba(15, 23, 42, 0.78) 100%);
     overflow-y: auto;
   }
   #lobby-overlay.hidden { display: none; }
@@ -357,11 +416,11 @@
     justify-content: space-between;
     gap: 10px;
     background: rgba(255, 255, 255, 0.92);
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(14px);
     padding: 10px 16px;
     border-radius: 18px;
-    border: 2px solid rgba(245, 158, 11, 0.55);
-    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+    border: 2px solid rgba(245, 158, 11, 0.65);
+    box-shadow: 0 12px 34px rgba(15, 23, 42, 0.22);
   }
 
   .brand-title {
@@ -377,8 +436,9 @@
     background: linear-gradient(135deg, #f59e0b, #ea580c);
     color: #fff;
     font-size: 11px;
-    padding: 3px 8px;
+    padding: 3px 9px;
     border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(234, 88, 12, 0.35);
   }
 
   .lobby-pills { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -393,16 +453,18 @@
     cursor: pointer;
     transition: all 0.15s ease;
   }
+  .l-pill:hover { border-color: #0284c7; transform: translateY(-1px); }
   .l-pill.active {
     background: linear-gradient(90deg, #0284c7, #06b6d4);
     border-color: #0284c7;
     color: #ffffff;
-    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);
+    box-shadow: 0 4px 14px rgba(2, 132, 199, 0.4);
   }
   .l-pill.gold.active {
     background: linear-gradient(90deg, #f59e0b, #d97706);
     border-color: #b45309;
     color: #ffffff;
+    box-shadow: 0 4px 14px rgba(217, 119, 6, 0.4);
   }
 
   .lobby-bottom-deck {
@@ -424,14 +486,14 @@
   }
 
   .lobby-box {
-    background: rgba(255, 255, 255, 0.93);
-    backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(14px);
     border-radius: 18px;
     padding: 12px 14px;
-    border: 2px solid rgba(2, 132, 199, 0.35);
-    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.22);
+    border: 2px solid rgba(2, 132, 199, 0.42);
+    box-shadow: 0 14px 36px rgba(15, 23, 42, 0.28);
   }
-  .lobby-box.p2 { border-color: rgba(244, 63, 94, 0.4); }
+  .lobby-box.p2 { border-color: rgba(244, 63, 94, 0.45); }
 
   .box-head {
     display: flex;
@@ -460,22 +522,23 @@
   }
   .f-tile:hover { transform: translateY(-2px); border-color: #0284c7; }
   .f-tile.selected {
-    background: #e0f2fe;
+    background: linear-gradient(180deg, #e0f2fe, #bae6fd);
     border-color: #0284c7;
-    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+    box-shadow: 0 5px 14px rgba(2, 132, 199, 0.28);
   }
   .lobby-box.p2 .f-tile.selected {
-    background: #ffe4e6;
+    background: linear-gradient(180deg, #ffe4e6, #fecdd3);
     border-color: #f43f5e;
-    box-shadow: 0 4px 12px rgba(244, 63, 94, 0.25);
+    box-shadow: 0 5px 14px rgba(244, 63, 94, 0.28);
   }
 
   .f-swatch {
-    width: 18px;
-    height: 18px;
+    width: 19px;
+    height: 19px;
     border-radius: 50%;
     margin: 0 auto 4px;
     border: 2px solid #0f172a;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
   }
   .f-name { font-size: 11px; font-weight: 900; color: #0f172a; }
   .f-passive-tag { font-size: 9px; font-weight: 700; color: #475569; }
@@ -495,17 +558,18 @@
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    background: rgba(255, 255, 255, 0.94);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
     padding: 10px 14px;
     border-radius: 16px;
-    border: 2px solid rgba(245, 158, 11, 0.5);
+    border: 2px solid rgba(245, 158, 11, 0.55);
   }
 
   .stage-options { display: flex; flex-wrap: wrap; gap: 6px; }
 
   .champ-start-btn {
-    padding: 14px 24px;
-    border: none;
+    padding: 15px 24px;
+    border: 2px solid rgba(254, 240, 138, 0.7);
     border-radius: 16px;
     background: linear-gradient(90deg, #f59e0b, #f97316, #ef4444);
     color: #ffffff;
@@ -513,11 +577,12 @@
     font-weight: 900;
     letter-spacing: 0.05em;
     cursor: pointer;
-    box-shadow: 0 10px 28px rgba(249, 115, 22, 0.45);
+    box-shadow: 0 12px 32px rgba(249, 115, 22, 0.5);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     transition: transform 0.15s ease, filter 0.15s ease;
     width: 100%;
   }
-  .champ-start-btn:hover { transform: translateY(-2px); filter: brightness(1.06); }
+  .champ-start-btn:hover { transform: translateY(-2px); filter: brightness(1.08); }
 
   #weapon-select-overlay {
     position: absolute;
@@ -541,26 +606,27 @@
 
   .ws-top-banner {
     align-self: center;
-    background: rgba(15, 23, 42, 0.9);
+    background: rgba(15, 23, 42, 0.92);
+    backdrop-filter: blur(12px);
     color: #ffffff;
     border: 2px solid #f59e0b;
     border-radius: 16px;
     padding: 10px 18px;
     text-align: center;
-    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.42);
     pointer-events: auto;
   }
   .ws-step-badge {
     display: inline-block;
-    background: #0284c7;
+    background: linear-gradient(90deg, #0284c7, #06b6d4);
     color: #fff;
     font-size: 11px;
     font-weight: 900;
-    padding: 3px 10px;
+    padding: 3px 11px;
     border-radius: 999px;
     margin-bottom: 4px;
   }
-  .ws-pane.p2 .ws-step-badge { background: #f43f5e; }
+  .ws-pane.p2 .ws-step-badge { background: linear-gradient(90deg, #e11d48, #fb7185); }
   .ws-title { font-size: clamp(16px, 2.4vw, 22px); font-weight: 900; }
   .ws-sub { font-size: 11px; color: #cbd5e1; margin-top: 2px; }
 
@@ -582,29 +648,29 @@
   }
 
   .ws-card {
-    background: rgba(255, 255, 255, 0.94);
-    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
     border: 2.5px solid #cbd5e1;
     border-radius: 16px;
     padding: 12px 10px;
     text-align: center;
     cursor: pointer;
     transition: all 0.16s ease;
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.25);
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.3);
   }
   .ws-card:hover, .ws-card.focused {
-    transform: translateY(-4px) scale(1.03);
+    transform: translateY(-5px) scale(1.035);
     border-color: #f59e0b;
-    background: #fffbeb;
-    box-shadow: 0 14px 30px rgba(245, 158, 11, 0.42);
+    background: linear-gradient(180deg, #ffffff, #fef3c7);
+    box-shadow: 0 16px 34px rgba(245, 158, 11, 0.48);
   }
-  .ws-icon { font-size: 26px; margin-bottom: 4px; }
+  .ws-icon { font-size: 28px; margin-bottom: 4px; }
   .ws-wname { font-size: 13px; font-weight: 900; color: #0f172a; }
   .ws-attr {
     display: inline-block;
     font-size: 10px;
     font-weight: 800;
-    padding: 2px 7px;
+    padding: 2px 8px;
     border-radius: 999px;
     margin: 4px 0;
     color: #fff;
@@ -614,8 +680,8 @@
   #result-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(15, 23, 42, 0.72);
-    backdrop-filter: blur(8px);
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(10px);
     z-index: 35;
     display: flex;
     align-items: center;
@@ -624,7 +690,7 @@
   }
   #result-overlay.hidden { display: none; }
   .result-box {
-    background: #ffffff;
+    background: linear-gradient(180deg, #ffffff, #f8fafc);
     color: #0f172a;
     border: 3px solid #f59e0b;
     border-radius: 24px;
@@ -632,7 +698,7 @@
     max-width: 440px;
     width: 100%;
     text-align: center;
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
   }
   .res-heading { font-size: 32px; font-weight: 900; color: #d97706; margin-bottom: 6px; }
   .res-desc { font-size: 14px; color: #334155; margin-bottom: 20px; }
@@ -762,6 +828,10 @@
 
 <section id="viewport-wrap">
   <canvas id="game-canvas"></canvas>
+  <div id="screen-fx-layer">
+    <div class="fx-pane" id="fx-pane-p1"></div>
+    <div class="fx-pane hidden" id="fx-pane-p2"></div>
+  </div>
   <div id="split-divider"></div>
   <div id="damage-popups"></div>
 
@@ -781,6 +851,7 @@
         </div>
       </div>
       <div class="hp-bar-outer">
+        <div class="hp-bar-trail" id="hud-p1-hp-trail"></div>
         <div class="hp-bar-inner" id="hud-p1-hp"></div>
         <div class="hp-bar-label" id="hud-p1-hp-txt">100 / 100</div>
       </div>
@@ -821,6 +892,7 @@
         </div>
       </div>
       <div class="hp-bar-outer">
+        <div class="hp-bar-trail" id="hud-p2-hp-trail"></div>
         <div class="hp-bar-inner" id="hud-p2-hp"></div>
         <div class="hp-bar-label" id="hud-p2-hp-txt">115 / 115</div>
       </div>
@@ -1066,7 +1138,7 @@
     }
   }
 
-  // 2. FIGHTERS, ATTRIBUTE ARMS DATA
+  // 2. FIGHTERS & ATTRIBUTE ARMS DATA
   const FIGHTERS = {
     IGNIS: {
       id: 'IGNIS', name: 'IGNIS', kor: '이그니스', passiveShort: '히트 러시',
@@ -1135,42 +1207,233 @@
 
   const WEAPON_KEYS = Object.keys(ATTRIBUTE_ARMS);
 
-  // 3. THREE.JS RENDERER, SCENE & ARENAS
+  // 3. PROCEDURAL PBR TEXTURES & ENVIRONMENT MAP (NO EXTERNAL IMAGE DEPENDENCIES)
+  function createProceduralEnvMap(rendererInstance) {
+    const c = document.createElement('canvas');
+    c.width = 512;
+    c.height = 256;
+    const ctx = c.getContext('2d');
+    const grad = ctx.createLinearGradient(0, 0, 0, 256);
+    grad.addColorStop(0.0, '#38bdf8');
+    grad.addColorStop(0.45, '#f8fafc');
+    grad.addColorStop(0.52, '#fde68a');
+    grad.addColorStop(1.0, '#1e293b');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 512, 256);
+
+    // 반사광 하이라이트 스튜디오 밴드
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.72)';
+    ctx.fillRect(40, 36, 160, 22);
+    ctx.fillRect(300, 44, 150, 18);
+
+    const tex = new THREE.CanvasTexture(c);
+    tex.mapping = THREE.EquirectangularReflectionMapping;
+    tex.encoding = THREE.sRGBEncoding;
+
+    const pmrem = new THREE.PMREMGenerator(rendererInstance);
+    pmrem.compileEquirectangularShader();
+    const rt = pmrem.fromEquirectangular(tex);
+    tex.dispose();
+    pmrem.dispose();
+    return rt.texture;
+  }
+
+  function createArenaFloorTexture(stageId) {
+    const size = 1024;
+    const c = document.createElement('canvas');
+    c.width = size;
+    c.height = size;
+    const ctx = c.getContext('2d');
+    const cx = size / 2;
+    const cy = size / 2;
+
+    const palette = stageId === 'SKY_COLOSSEUM'
+      ? { base1: '#ffffff', base2: '#e2e8f0', grid: 'rgba(2, 132, 199, 0.16)', ring1: '#f59e0b', ring2: '#0284c7', core: '#0ea5e9' }
+      : stageId === 'MAGMA_FOUNDRY'
+      ? { base1: '#334155', base2: '#1e293b', grid: 'rgba(249, 115, 22, 0.25)', ring1: '#f97316', ring2: '#facc15', core: '#ea580c' }
+      : { base1: '#1e293b', base2: '#0f172a', grid: 'rgba(6, 182, 212, 0.24)', ring1: '#06b6d4', ring2: '#a855f7', core: '#22d3ee' };
+
+    const bgGrad = ctx.createRadialGradient(cx, cy, 30, cx, cy, cx);
+    bgGrad.addColorStop(0, palette.base1);
+    bgGrad.addColorStop(0.75, palette.base2);
+    bgGrad.addColorStop(1, palette.base1);
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, size, size);
+
+    // 육각형 하이테크 타일 패턴
+    ctx.strokeStyle = palette.grid;
+    ctx.lineWidth = 2;
+    const step = 48;
+    for (let y = 0; y < size + step; y += step * 0.86) {
+      const rowOffset = (Math.round(y / (step * 0.86)) % 2) * (step * 0.5);
+      for (let x = 0; x < size + step; x += step) {
+        ctx.beginPath();
+        for (let k = 0; k < 6; k++) {
+          const ang = (Math.PI / 3) * k + Math.PI / 6;
+          const px = x + rowOffset + Math.cos(ang) * (step * 0.52);
+          const py = y + Math.sin(ang) * (step * 0.52);
+          if (k === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.stroke();
+      }
+    }
+
+    // 방사형 구역 분할 라인
+    ctx.strokeStyle = palette.ring2;
+    ctx.lineWidth = 3;
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(a) * 115, cy + Math.sin(a) * 115);
+      ctx.lineTo(cx + Math.cos(a) * 475, cy + Math.sin(a) * 475);
+      ctx.stroke();
+    }
+
+    // 동심원 아레나 트랙
+    [470, 442, 310, 118].forEach((rad, idx) => {
+      ctx.beginPath();
+      ctx.arc(cx, cy, rad, 0, Math.PI * 2);
+      ctx.strokeStyle = idx % 2 === 0 ? palette.ring1 : palette.ring2;
+      ctx.lineWidth = idx === 0 ? 14 : 5;
+      ctx.stroke();
+    });
+
+    // 중앙 챔피언십 엠블럼
+    ctx.beginPath();
+    ctx.arc(cx, cy, 88, 0, Math.PI * 2);
+    ctx.fillStyle = palette.core;
+    ctx.globalAlpha = 0.22;
+    ctx.fill();
+    ctx.globalAlpha = 1.0;
+
+    ctx.fillStyle = palette.ring1;
+    ctx.font = '900 34px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('AERO ARMS', cx, cy - 10);
+    ctx.font = '800 18px sans-serif';
+    ctx.fillStyle = palette.ring2;
+    ctx.fillText('GRAND ARENA', cx, cy + 20);
+
+    const tex = new THREE.CanvasTexture(c);
+    tex.encoding = THREE.sRGBEncoding;
+    tex.anisotropy = 4;
+    return tex;
+  }
+
+  function createSkyDomeTexture(stageId) {
+    const c = document.createElement('canvas');
+    c.width = 512;
+    c.height = 256;
+    const ctx = c.getContext('2d');
+    const grad = ctx.createLinearGradient(0, 0, 0, 256);
+
+    if (stageId === 'SKY_COLOSSEUM') {
+      grad.addColorStop(0.0, '#0284c7');
+      grad.addColorStop(0.38, '#7dd3fc');
+      grad.addColorStop(0.58, '#e0f2fe');
+      grad.addColorStop(1.0, '#fef3c7');
+    } else if (stageId === 'MAGMA_FOUNDRY') {
+      grad.addColorStop(0.0, '#1e1b4b');
+      grad.addColorStop(0.42, '#7c2d12');
+      grad.addColorStop(0.65, '#ea580c');
+      grad.addColorStop(1.0, '#fed7aa');
+    } else {
+      grad.addColorStop(0.0, '#090d16');
+      grad.addColorStop(0.42, '#1e1b4b');
+      grad.addColorStop(0.68, '#312e81');
+      grad.addColorStop(1.0, '#c7d2fe');
+    }
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 512, 256);
+
+    // 구름 / 에너지 밴드 디테일
+    ctx.fillStyle = stageId === 'SKY_COLOSSEUM'
+      ? 'rgba(255, 255, 255, 0.36)'
+      : stageId === 'MAGMA_FOUNDRY'
+      ? 'rgba(251, 146, 60, 0.22)'
+      : 'rgba(34, 211, 238, 0.2)';
+    for (let i = 0; i < 18; i++) {
+      const x = (i * 57) % 512;
+      const y = 70 + (i % 5) * 20;
+      ctx.beginPath();
+      ctx.ellipse(x, y, 48 + (i % 3) * 18, 9, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    const tex = new THREE.CanvasTexture(c);
+    tex.encoding = THREE.sRGBEncoding;
+    return tex;
+  }
+
+  function createBuildingWindowTexture() {
+    const c = document.createElement('canvas');
+    c.width = 128;
+    c.height = 256;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(0, 0, 128, 256);
+    for (let y = 10; y < 246; y += 16) {
+      for (let x = 10; x < 118; x += 18) {
+        const lit = ((x * 7 + y * 13) % 5) !== 0;
+        ctx.fillStyle = lit ? (((x + y) % 3 === 0) ? '#38bdf8' : '#fde047') : '#0f172a';
+        ctx.fillRect(x, y, 10, 9);
+      }
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.encoding = THREE.sRGBEncoding;
+    return tex;
+  }
+
+  // 4. THREE.JS RENDERER, SCENE & ARENAS
   const canvas = document.getElementById('game-canvas');
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.12;
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0xdbeafe);
-  scene.fog = new THREE.FogExp2(0xdbeafe, 0.0075);
+  scene.fog = new THREE.FogExp2(0xdbeafe, 0.006);
+  scene.environment = createProceduralEnvMap(renderer);
 
-  const camera1 = new THREE.PerspectiveCamera(48, 16 / 9, 0.1, 220);
-  const camera2 = new THREE.PerspectiveCamera(48, 16 / 9, 0.1, 220);
+  const camera1 = new THREE.PerspectiveCamera(48, 16 / 9, 0.1, 240);
+  const camera2 = new THREE.PerspectiveCamera(48, 16 / 9, 0.1, 240);
 
-  const hemiLight = new THREE.HemisphereLight(0xffffff, 0x94a3b8, 1.0);
-  hemiLight.position.set(0, 32, 0);
+  // 3점 조명 시스템 (Hemisphere + Warm Key Shadow Light + Cool Rim Light)
+  const hemiLight = new THREE.HemisphereLight(0xffffff, 0x64748b, 0.92);
+  hemiLight.position.set(0, 34, 0);
   scene.add(hemiLight);
 
-  const dirLight = new THREE.DirectionalLight(0xffffff, 0.95);
-  dirLight.position.set(16, 30, 18);
+  const dirLight = new THREE.DirectionalLight(0xfffbeb, 1.15);
+  dirLight.position.set(16, 32, 18);
   dirLight.castShadow = true;
-  dirLight.shadow.mapSize.width = 1024;
-  dirLight.shadow.mapSize.height = 1024;
-  const sc = 18;
+  dirLight.shadow.mapSize.width = 2048;
+  dirLight.shadow.mapSize.height = 2048;
+  dirLight.shadow.bias = -0.0005;
+  const sc = 17;
   dirLight.shadow.camera.left = -sc;
   dirLight.shadow.camera.right = sc;
   dirLight.shadow.camera.top = sc;
   dirLight.shadow.camera.bottom = -sc;
   scene.add(dirLight);
 
+  const rimLight = new THREE.DirectionalLight(0x38bdf8, 0.65);
+  rimLight.position.set(-18, 14, -20);
+  scene.add(rimLight);
+
   const ARENA_RADIUS = 14.2;
   const stageGroup = new THREE.Group();
   scene.add(stageGroup);
   let stagePads = [];
+  let stageAnimatedProps = [];
   let currentStageId = 'SKY_COLOSSEUM';
+  const cachedBuildingTex = createBuildingWindowTexture();
 
   function buildStage(stageId) {
     currentStageId = stageId;
@@ -1178,76 +1441,104 @@
       stageGroup.remove(stageGroup.children[0]);
     }
     stagePads = [];
+    stageAnimatedProps = [];
+
+    // 파노라마 스카이 돔
+    const skyDome = new THREE.Mesh(
+      new THREE.SphereGeometry(135, 32, 24),
+      new THREE.MeshBasicMaterial({ map: createSkyDomeTexture(stageId), side: THREE.BackSide, fog: false })
+    );
+    stageGroup.add(skyDome);
+
+    // 고해상도 프로시저럴 링 바닥
+    const floorTex = createArenaFloorTexture(stageId);
+    const deck = new THREE.Mesh(
+      new THREE.CylinderGeometry(ARENA_RADIUS, ARENA_RADIUS + 0.85, 1.15, 64),
+      new THREE.MeshStandardMaterial({
+        map: floorTex,
+        metalness: stageId === 'SKY_COLOSSEUM' ? 0.25 : 0.55,
+        roughness: 0.32
+      })
+    );
+    deck.position.y = -0.575;
+    deck.receiveShadow = true;
+    stageGroup.add(deck);
+
+    // 아레나 하부 부유 코어
+    const underCore = new THREE.Mesh(
+      new THREE.ConeGeometry(ARENA_RADIUS * 0.72, 4.5, 32),
+      new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.75, roughness: 0.28 })
+    );
+    underCore.rotation.x = Math.PI;
+    underCore.position.y = -3.3;
+    stageGroup.add(underCore);
 
     if (stageId === 'SKY_COLOSSEUM') {
       scene.background = new THREE.Color(0xdbeafe);
-      scene.fog = new THREE.FogExp2(0xdbeafe, 0.007);
-
-      const deck = new THREE.Mesh(
-        new THREE.CylinderGeometry(ARENA_RADIUS, ARENA_RADIUS + 0.8, 1.1, 64),
-        new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.25, roughness: 0.35 })
-      );
-      deck.position.y = -0.55;
-      deck.receiveShadow = true;
-      stageGroup.add(deck);
+      scene.fog = new THREE.FogExp2(0xdbeafe, 0.0055);
+      hemiLight.color.setHex(0xffffff);
+      hemiLight.groundColor.setHex(0x94a3b8);
+      dirLight.color.setHex(0xfffbeb);
+      rimLight.color.setHex(0x38bdf8);
 
       const goldTrim = new THREE.Mesh(
-        new THREE.TorusGeometry(ARENA_RADIUS - 0.1, 0.18, 16, 72),
-        new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.7, roughness: 0.22 })
+        new THREE.TorusGeometry(ARENA_RADIUS - 0.05, 0.2, 16, 72),
+        new THREE.MeshStandardMaterial({ color: 0xf59e0b, emissive: 0xd97706, emissiveIntensity: 0.22, metalness: 0.82, roughness: 0.18 })
       );
       goldTrim.rotation.x = Math.PI / 2;
       goldTrim.position.y = 0.08;
       stageGroup.add(goldTrim);
 
-      const centerEmblem = new THREE.Mesh(
-        new THREE.RingGeometry(0.6, 2.8, 48),
-        new THREE.MeshBasicMaterial({ color: 0x0284c7, side: THREE.DoubleSide })
-      );
-      centerEmblem.rotation.x = -Math.PI / 2;
-      centerEmblem.position.y = 0.015;
-      stageGroup.add(centerEmblem);
-
       [-8.5, 8.5].forEach((xp) => {
         const pad = new THREE.Mesh(
-          new THREE.CylinderGeometry(1.25, 1.35, 0.14, 24),
-          new THREE.MeshBasicMaterial({ color: 0x10b981 })
+          new THREE.CylinderGeometry(1.25, 1.38, 0.15, 28),
+          new THREE.MeshStandardMaterial({ color: 0x10b981, emissive: 0x10b981, emissiveIntensity: 0.65 })
         );
         pad.position.set(xp, 0.06, 0);
-        stageGroup.add(pad);
+        const halo = new THREE.Mesh(
+          new THREE.TorusGeometry(1.3, 0.05, 8, 32),
+          new THREE.MeshBasicMaterial({ color: 0x6ee7b7, transparent: true, opacity: 0.8 })
+        );
+        halo.rotation.x = Math.PI / 2;
+        halo.position.set(xp, 0.35, 0);
+        stageGroup.add(pad, halo);
+        stageAnimatedProps.push({ mesh: halo, type: 'HOVER_RING', baseY: 0.35, phase: xp });
         stagePads.push({ x: xp, z: 0, radius: 1.35, boostY: 16.5, color: 0x10b981 });
       });
 
       for (let i = 0; i < 12; i++) {
         const ang = (i / 12) * Math.PI * 2;
-        const dist = ARENA_RADIUS + 3.4;
+        const dist = ARENA_RADIUS + 3.6;
         const pillar = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.45, 0.55, 6.5, 12),
-          new THREE.MeshStandardMaterial({ color: 0xf1f5f9, metalness: 0.3, roughness: 0.4 })
+          new THREE.CylinderGeometry(0.45, 0.56, 7.0, 14),
+          new THREE.MeshStandardMaterial({ color: 0xf8fafc, metalness: 0.25, roughness: 0.35 })
         );
-        pillar.position.set(Math.cos(ang) * dist, 2.5, Math.sin(ang) * dist);
+        pillar.position.set(Math.cos(ang) * dist, 2.7, Math.sin(ang) * dist);
         stageGroup.add(pillar);
 
         const cap = new THREE.Mesh(
-          new THREE.SphereGeometry(0.62, 12, 12),
-          new THREE.MeshBasicMaterial({ color: i % 2 === 0 ? 0xf59e0b : 0x0284c7 })
+          new THREE.OctahedronGeometry(0.68, 1),
+          new THREE.MeshStandardMaterial({
+            color: i % 2 === 0 ? 0xf59e0b : 0x0284c7,
+            emissive: i % 2 === 0 ? 0xf59e0b : 0x0284c7,
+            emissiveIntensity: 0.5,
+            metalness: 0.7, roughness: 0.2
+          })
         );
-        cap.position.set(pillar.position.x, 5.9, pillar.position.z);
+        cap.position.set(pillar.position.x, 6.5, pillar.position.z);
         stageGroup.add(cap);
+        stageAnimatedProps.push({ mesh: cap, type: 'SPIN_CRYSTAL', baseY: 6.5, phase: i });
       }
     } else if (stageId === 'MAGMA_FOUNDRY') {
-      scene.background = new THREE.Color(0xfed7aa);
-      scene.fog = new THREE.FogExp2(0xfed7aa, 0.008);
-
-      const deck = new THREE.Mesh(
-        new THREE.CylinderGeometry(ARENA_RADIUS, ARENA_RADIUS + 0.8, 1.1, 64),
-        new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.65, roughness: 0.35 })
-      );
-      deck.position.y = -0.55;
-      deck.receiveShadow = true;
-      stageGroup.add(deck);
+      scene.background = new THREE.Color(0x431407);
+      scene.fog = new THREE.FogExp2(0x7c2d12, 0.0075);
+      hemiLight.color.setHex(0xffedd5);
+      hemiLight.groundColor.setHex(0x9a3412);
+      dirLight.color.setHex(0xfdba74);
+      rimLight.color.setHex(0xf97316);
 
       const lavaRing = new THREE.Mesh(
-        new THREE.TorusGeometry(ARENA_RADIUS - 0.1, 0.2, 16, 72),
+        new THREE.TorusGeometry(ARENA_RADIUS - 0.05, 0.22, 16, 72),
         new THREE.MeshBasicMaterial({ color: 0xf97316 })
       );
       lavaRing.rotation.x = Math.PI / 2;
@@ -1255,118 +1546,161 @@
       stageGroup.add(lavaRing);
 
       const vent = new THREE.Mesh(
-        new THREE.CylinderGeometry(1.75, 1.9, 0.14, 28),
-        new THREE.MeshBasicMaterial({ color: 0xf97316 })
+        new THREE.CylinderGeometry(1.75, 1.95, 0.15, 28),
+        new THREE.MeshStandardMaterial({ color: 0xf97316, emissive: 0xea580c, emissiveIntensity: 0.85 })
       );
       vent.position.set(0, 0.06, 0);
-      stageGroup.add(vent);
+      const heatRing = new THREE.Mesh(
+        new THREE.TorusGeometry(1.85, 0.06, 8, 32),
+        new THREE.MeshBasicMaterial({ color: 0xfacc15, transparent: true, opacity: 0.85 })
+      );
+      heatRing.rotation.x = Math.PI / 2;
+      heatRing.position.set(0, 0.4, 0);
+      stageGroup.add(vent, heatRing);
+      stageAnimatedProps.push({ mesh: heatRing, type: 'HOVER_RING', baseY: 0.4, phase: 0 });
       stagePads.push({ x: 0, z: 0, radius: 1.85, boostY: 17.5, color: 0xf97316 });
 
       for (let i = 0; i < 16; i++) {
         const ang = (i / 16) * Math.PI * 2;
         const dist = 24 + (i % 3) * 5;
-        const h = 12 + (i % 4) * 5;
+        const h = 13 + (i % 4) * 5;
         const stack = new THREE.Mesh(
-          new THREE.BoxGeometry(3.2, h, 3.2),
-          new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.5, roughness: 0.5 })
+          new THREE.BoxGeometry(3.4, h, 3.4),
+          new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.65, roughness: 0.42 })
         );
         stack.position.set(Math.cos(ang) * dist, h / 2 - 2, Math.sin(ang) * dist);
-        stageGroup.add(stack);
+        const furnaceBand = new THREE.Mesh(
+          new THREE.BoxGeometry(3.55, 0.9, 3.55),
+          new THREE.MeshBasicMaterial({ color: 0xf97316 })
+        );
+        furnaceBand.position.set(stack.position.x, h * 0.55, stack.position.z);
+        stageGroup.add(stack, furnaceBand);
       }
     } else {
-      scene.background = new THREE.Color(0xe0e7ff);
-      scene.fog = new THREE.FogExp2(0xe0e7ff, 0.0075);
-
-      const deck = new THREE.Mesh(
-        new THREE.CylinderGeometry(ARENA_RADIUS, ARENA_RADIUS + 0.8, 1.1, 64),
-        new THREE.MeshStandardMaterial({ color: 0x1e293b, metalness: 0.55, roughness: 0.28 })
-      );
-      deck.position.y = -0.55;
-      deck.receiveShadow = true;
-      stageGroup.add(deck);
+      scene.background = new THREE.Color(0x1e1b4b);
+      scene.fog = new THREE.FogExp2(0x1e1b4b, 0.0068);
+      hemiLight.color.setHex(0xe0e7ff);
+      hemiLight.groundColor.setHex(0x312e81);
+      dirLight.color.setHex(0xe0f2fe);
+      rimLight.color.setHex(0xc084fc);
 
       const neonRing = new THREE.Mesh(
-        new THREE.TorusGeometry(ARENA_RADIUS - 0.1, 0.16, 16, 72),
-        new THREE.MeshBasicMaterial({ color: 0x06b6d4 })
+        new THREE.TorusGeometry(ARENA_RADIUS - 0.05, 0.18, 16, 72),
+        new THREE.MeshBasicMaterial({ color: 0x22d3ee })
       );
       neonRing.rotation.x = Math.PI / 2;
       neonRing.position.y = 0.08;
       stageGroup.add(neonRing);
 
-      const hMark = new THREE.Mesh(
-        new THREE.RingGeometry(1.4, 2.8, 48),
-        new THREE.MeshBasicMaterial({ color: 0xa855f7, side: THREE.DoubleSide })
-      );
-      hMark.rotation.x = -Math.PI / 2;
-      hMark.position.y = 0.015;
-      stageGroup.add(hMark);
-
       [-7.5, 7.5].forEach((zp) => {
         const pad = new THREE.Mesh(
-          new THREE.CylinderGeometry(1.2, 1.3, 0.14, 24),
-          new THREE.MeshBasicMaterial({ color: 0x06b6d4 })
+          new THREE.CylinderGeometry(1.2, 1.32, 0.15, 24),
+          new THREE.MeshStandardMaterial({ color: 0x06b6d4, emissive: 0x06b6d4, emissiveIntensity: 0.75 })
         );
         pad.position.set(0, 0.06, zp);
-        stageGroup.add(pad);
+        const halo = new THREE.Mesh(
+          new THREE.TorusGeometry(1.25, 0.05, 8, 32),
+          new THREE.MeshBasicMaterial({ color: 0xa855f7, transparent: true, opacity: 0.85 })
+        );
+        halo.rotation.x = Math.PI / 2;
+        halo.position.set(0, 0.35, zp);
+        stageGroup.add(pad, halo);
+        stageAnimatedProps.push({ mesh: halo, type: 'HOVER_RING', baseY: 0.35, phase: zp });
         stagePads.push({ x: 0, z: zp, radius: 1.3, boostY: 16.0, color: 0x06b6d4 });
       });
 
       for (let i = 0; i < 20; i++) {
         const ang = (i / 20) * Math.PI * 2 + 0.1;
-        const dist = 30 + (i % 3) * 6;
-        const h = 16 + (i % 5) * 6;
+        const dist = 29 + (i % 3) * 6;
+        const h = 18 + (i % 5) * 6;
         const tower = new THREE.Mesh(
-          new THREE.BoxGeometry(3.6, h, 3.6),
-          new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.4, roughness: 0.35 })
+          new THREE.BoxGeometry(3.8, h, 3.8),
+          new THREE.MeshStandardMaterial({
+            map: cachedBuildingTex,
+            emissiveMap: cachedBuildingTex,
+            emissive: new THREE.Color(0xffffff),
+            emissiveIntensity: 0.42,
+            metalness: 0.55,
+            roughness: 0.3
+          })
         );
-        tower.position.set(Math.cos(ang) * dist, h / 2 - 4, Math.sin(ang) * dist);
+        tower.position.set(Math.cos(ang) * dist, h / 2 - 5, Math.sin(ang) * dist);
         stageGroup.add(tower);
       }
+    }
+
+    // 경기장별 부유 대기 파티클 (금빛 입자 / 용암 불티 / 네온 스트림)
+    const pColor = stageId === 'SKY_COLOSSEUM' ? 0xfde047 : stageId === 'MAGMA_FOUNDRY' ? 0xf97316 : 0x22d3ee;
+    for (let i = 0; i < 28; i++) {
+      const mote = new THREE.Mesh(
+        new THREE.OctahedronGeometry(0.08 + (i % 3) * 0.03, 0),
+        new THREE.MeshBasicMaterial({ color: pColor, transparent: true, opacity: 0.65 })
+      );
+      const a = Math.random() * Math.PI * 2;
+      const rad = 4 + Math.random() * 14;
+      mote.position.set(Math.cos(a) * rad, 0.8 + Math.random() * 7.5, Math.sin(a) * rad);
+      stageGroup.add(mote);
+      stageAnimatedProps.push({
+        mesh: mote,
+        type: 'AMBIENT_MOTE',
+        baseY: mote.position.y,
+        phase: Math.random() * 6.28,
+        speed: 0.6 + Math.random() * 0.8
+      });
     }
   }
   buildStage('SKY_COLOSSEUM');
 
-  // 4. FIGHTER MODEL + SPRING ARM & WEAPON MESH
-  const COIL_SEGMENTS = 22;
+  // 5. FIGHTER MODEL + SPRING ARM & WEAPON MESH
+  const COIL_SEGMENTS = 24;
 
   function buildWeaponHeadMesh(weaponId) {
     const w = ATTRIBUTE_ARMS[weaponId];
     const group = new THREE.Group();
     const mat = new THREE.MeshStandardMaterial({
-      color: w.color, emissive: w.color, emissiveIntensity: 0.35, metalness: 0.45, roughness: 0.25
+      color: w.color, emissive: w.color, emissiveIntensity: 0.42, metalness: 0.58, roughness: 0.22
     });
     const trimMat = new THREE.MeshBasicMaterial({ color: w.coilColor });
 
     if (weaponId === 'BLAZE') {
-      const core = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.38, 0.48), mat);
+      const core = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.40, 0.52), mat);
       core.castShadow = true;
-      const finL = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.36, 6), trimMat);
+      const knuckle = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.16, 0.16), trimMat);
+      knuckle.position.set(0, 0.05, 0.24);
+      const finL = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.40, 6), trimMat);
       finL.rotation.x = -Math.PI / 2;
-      finL.position.set(-0.22, 0.08, -0.1);
+      finL.position.set(-0.24, 0.09, -0.1);
       const finR = finL.clone();
-      finR.position.x = 0.22;
-      group.add(core, finL, finR);
+      finR.position.x = 0.24;
+      group.add(core, knuckle, finL, finR);
     } else if (weaponId === 'CHAKRAM') {
-      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.09, 12, 24), mat);
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.095, 14, 28), mat);
       ring.rotation.x = Math.PI / 2;
       ring.castShadow = true;
-      const hub = new THREE.Mesh(new THREE.SphereGeometry(0.14, 12, 12), trimMat);
-      group.add(ring, hub);
+      const outerBlade = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.025, 8, 28), trimMat);
+      outerBlade.rotation.x = Math.PI / 2;
+      const hub = new THREE.Mesh(new THREE.OctahedronGeometry(0.16, 1), trimMat);
+      group.add(ring, outerBlade, hub);
     } else if (weaponId === 'FROST') {
-      const head = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.34, 0.56, 8), mat);
+      const head = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.60, 8), mat);
       head.rotation.z = Math.PI / 2;
       head.castShadow = true;
-      const capL = new THREE.Mesh(new THREE.CylinderGeometry(0.37, 0.37, 0.08, 8), trimMat);
+      const capL = new THREE.Mesh(new THREE.CylinderGeometry(0.39, 0.39, 0.09, 8), trimMat);
       capL.rotation.z = Math.PI / 2;
-      capL.position.x = -0.28;
+      capL.position.x = -0.30;
       const capR = capL.clone();
-      capR.position.x = 0.28;
-      group.add(head, capL, capR);
+      capR.position.x = 0.30;
+      const spike = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.32, 6), trimMat);
+      spike.rotation.x = Math.PI / 2;
+      spike.position.z = 0.38;
+      group.add(head, capL, capR, spike);
     } else {
-      const body = new THREE.Mesh(new THREE.OctahedronGeometry(0.30, 1), mat);
+      const body = new THREE.Mesh(new THREE.OctahedronGeometry(0.32, 1), mat);
       body.castShadow = true;
-      const orbit = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.04, 8, 20), trimMat);
-      group.add(body, orbit);
+      const orbit1 = new THREE.Mesh(new THREE.TorusGeometry(0.39, 0.04, 8, 24), trimMat);
+      const orbit2 = new THREE.Mesh(new THREE.TorusGeometry(0.39, 0.03, 8, 24), trimMat);
+      orbit2.rotation.x = Math.PI / 2;
+      group.add(body, orbit1, orbit2);
     }
     return group;
   }
@@ -1376,26 +1710,41 @@
     const root = new THREE.Group();
     root.scale.setScalar(spec.scale);
 
-    const priMat = new THREE.MeshStandardMaterial({ color: spec.primary, metalness: 0.5, roughness: 0.32 });
+    // 바닥 접지 그림자 (점프 높이에 따라 크기 자동 조절)
+    const groundShadow = new THREE.Mesh(
+      new THREE.CircleGeometry(0.75, 24),
+      new THREE.MeshBasicMaterial({ color: 0x0f172a, transparent: true, opacity: 0.36, depthWrite: false })
+    );
+    groundShadow.rotation.x = -Math.PI / 2;
+    groundShadow.position.y = 0.02;
+    root.add(groundShadow);
+
+    const priMat = new THREE.MeshStandardMaterial({ color: spec.primary, metalness: 0.62, roughness: 0.26 });
     const secMat = new THREE.MeshStandardMaterial({
-      color: spec.secondary, emissive: spec.secondary, emissiveIntensity: 0.55, metalness: 0.3, roughness: 0.25
+      color: spec.secondary, emissive: spec.secondary, emissiveIntensity: 0.65, metalness: 0.35, roughness: 0.22
     });
-    const accMat = new THREE.MeshStandardMaterial({ color: spec.accent, metalness: 0.6, roughness: 0.25 });
+    const accMat = new THREE.MeshStandardMaterial({ color: spec.accent, metalness: 0.72, roughness: 0.2 });
     const visorMat = new THREE.MeshBasicMaterial({ color: spec.secondary });
 
-    const hips = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.31, 0.26, 14), accMat);
+    const hips = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.31, 0.28, 16), accMat);
     hips.position.y = 0.88;
     root.add(hips);
+
+    const beltCore = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.14, 0.12), secMat);
+    beltCore.position.set(0, 0.88, 0.31);
+    root.add(beltCore);
 
     const makeLeg = (xOff) => {
       const leg = new THREE.Group();
       leg.position.set(xOff, 0.82, 0);
-      const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.12, 0.76, 12), priMat);
+      const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.145, 0.12, 0.76, 12), priMat);
       shin.position.y = -0.38;
       shin.castShadow = true;
-      const boot = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.16, 0.42), accMat);
+      const knee = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.16, 0.16), secMat);
+      knee.position.set(0, -0.32, 0.11);
+      const boot = new THREE.Mesh(new THREE.BoxGeometry(0.27, 0.17, 0.44), accMat);
       boot.position.set(0, -0.74, 0.08);
-      leg.add(shin, boot);
+      leg.add(shin, knee, boot);
       root.add(leg);
       return leg;
     };
@@ -1408,24 +1757,38 @@
 
     const chestW = fighterId === 'GLACIUS' ? 0.62 : fighterId === 'ZEPHYR' ? 0.40 : 0.47;
     const chestH = fighterId === 'GLACIUS' ? 0.74 : 0.66;
-    const chest = new THREE.Mesh(new THREE.CylinderGeometry(chestW, chestW * 0.78, chestH, 14), priMat);
+    const chest = new THREE.Mesh(new THREE.CylinderGeometry(chestW, chestW * 0.78, chestH, 16), priMat);
     chest.position.y = chestH * 0.5;
     chest.castShadow = true;
     torso.add(chest);
 
-    const emblem = new THREE.Mesh(new THREE.BoxGeometry(chestW * 0.82, 0.18, 0.12), secMat);
-    emblem.position.set(0, chestH * 0.56, chestW * 0.82);
+    // 가슴 아크 코어 + 등 부스터 팩
+    const emblem = new THREE.Mesh(new THREE.OctahedronGeometry(chestW * 0.34, 1), secMat);
+    emblem.scale.set(1.2, 0.7, 0.45);
+    emblem.position.set(0, chestH * 0.56, chestW * 0.86);
     torso.add(emblem);
+
+    const jetPack = new THREE.Mesh(new THREE.BoxGeometry(chestW * 1.1, chestH * 0.58, 0.24), accMat);
+    jetPack.position.set(0, chestH * 0.55, -chestW * 0.78);
+    const thrusterL = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.11, 0.14, 10), secMat);
+    thrusterL.position.set(-chestW * 0.32, chestH * 0.28, -chestW * 0.84);
+    const thrusterR = thrusterL.clone();
+    thrusterR.position.x = chestW * 0.32;
+    torso.add(jetPack, thrusterL, thrusterR);
 
     const head = new THREE.Group();
     head.position.set(0, chestH + 0.26, 0);
     torso.add(head);
 
-    const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.27, 16, 16), priMat);
+    const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.27, 18, 18), priMat);
     headMesh.castShadow = true;
     head.add(headMesh);
 
-    const visor = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.11, 0.14), visorMat);
+    const crest = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.22, 0.36), accMat);
+    crest.position.set(0, 0.22, -0.02);
+    head.add(crest);
+
+    const visor = new THREE.Mesh(new THREE.BoxGeometry(0.40, 0.11, 0.15), visorMat);
     visor.position.set(0, 0.02, 0.22);
     head.add(visor);
 
@@ -1436,11 +1799,13 @@
       shoulder.position.set(sign * shoulderX, chestH * 0.82, 0);
       torso.add(shoulder);
 
-      const pauldron = new THREE.Mesh(new THREE.SphereGeometry(0.24, 12, 12), accMat);
-      shoulder.add(pauldron);
+      const pauldron = new THREE.Mesh(new THREE.SphereGeometry(0.25, 14, 14), accMat);
+      const pauldronTrim = new THREE.Mesh(new THREE.TorusGeometry(0.24, 0.03, 8, 18), secMat);
+      pauldronTrim.rotation.x = Math.PI / 2;
+      shoulder.add(pauldron, pauldronTrim);
 
       const selectRing = new THREE.Mesh(
-        new THREE.TorusGeometry(0.36, 0.05, 10, 24),
+        new THREE.TorusGeometry(0.38, 0.055, 10, 28),
         new THREE.MeshBasicMaterial({ color: 0xfde047 })
       );
       selectRing.visible = false;
@@ -1452,8 +1817,8 @@
       gauntlet.add(weaponMesh);
 
       const chargeSphere = new THREE.Mesh(
-        new THREE.SphereGeometry(0.52, 14, 14),
-        new THREE.MeshBasicMaterial({ color: wSpec.coilColor, transparent: true, opacity: 0.35 })
+        new THREE.SphereGeometry(0.56, 16, 16),
+        new THREE.MeshBasicMaterial({ color: wSpec.coilColor, transparent: true, opacity: 0.38 })
       );
       chargeSphere.visible = false;
       gauntlet.add(chargeSphere);
@@ -1463,7 +1828,7 @@
       const coilGroup = new THREE.Group();
       coilGroup.visible = false;
       const coilNodes = [];
-      const nodeGeo = new THREE.TorusGeometry(0.11, 0.032, 6, 12);
+      const nodeGeo = new THREE.TorusGeometry(0.125, 0.038, 8, 14);
       const nodeMat = new THREE.MeshBasicMaterial({ color: wSpec.coilColor });
       for (let i = 0; i < COIL_SEGMENTS; i++) {
         const seg = new THREE.Mesh(nodeGeo, nodeMat);
@@ -1490,8 +1855,8 @@
     const rightArm = buildArmRig(1, rightWeaponId);
 
     const shieldDome = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.96, 0.96, 1.75, 16, 1, true),
-      new THREE.MeshBasicMaterial({ color: spec.secondary, transparent: true, opacity: 0.28, side: THREE.DoubleSide })
+      new THREE.CylinderGeometry(0.98, 0.98, 1.78, 20, 1, true),
+      new THREE.MeshBasicMaterial({ color: spec.secondary, transparent: true, opacity: 0.32, side: THREE.DoubleSide })
     );
     shieldDome.position.y = 1.05;
     shieldDome.visible = false;
@@ -1499,16 +1864,16 @@
 
     scene.add(root);
 
-    return { root, leftLeg, rightLeg, torso, head, leftArm, rightArm, shieldDome, secMat };
+    return { root, groundShadow, leftLeg, rightLeg, torso, head, leftArm, rightArm, shieldDome, priMat, secMat };
   }
 
-  // 5. VFX & DAMAGE POPUPS
+  // 6. VFX & DAMAGE POPUPS
   const activeVFX = [];
 
   function spawnShockwave(pos, colorHex, maxScale = 3.2, duration = 0.34) {
     const ring = new THREE.Mesh(
-      new THREE.RingGeometry(0.25, 0.56, 28),
-      new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 0.9, side: THREE.DoubleSide })
+      new THREE.RingGeometry(0.25, 0.58, 32),
+      new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 0.92, side: THREE.DoubleSide })
     );
     ring.position.copy(pos);
     ring.position.y = Math.max(0.08, pos.y);
@@ -1519,7 +1884,7 @@
       update: (p) => {
         const s = 1 + p * maxScale;
         ring.scale.set(s, s, 1);
-        ring.material.opacity = 0.9 * (1 - p);
+        ring.material.opacity = 0.92 * (1 - p);
       }
     });
   }
@@ -1527,22 +1892,24 @@
   function spawnBurstSparks(pos, colorHex, count = 10) {
     for (let i = 0; i < count; i++) {
       const spark = new THREE.Mesh(
-        new THREE.OctahedronGeometry(0.11, 0),
+        new THREE.OctahedronGeometry(0.12, 0),
         new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 1 })
       );
       spark.position.copy(pos);
       const ang = (i / count) * Math.PI * 2 + Math.random() * 0.4;
-      const spd = 3.8 + Math.random() * 4.8;
-      const vy = 1.6 + Math.random() * 3.8;
+      const spd = 4.0 + Math.random() * 5.0;
+      const vy = 1.8 + Math.random() * 4.0;
       const vx = Math.cos(ang) * spd;
       const vz = Math.sin(ang) * spd;
       scene.add(spark);
       activeVFX.push({
-        mesh: spark, age: 0, duration: 0.28,
+        mesh: spark, age: 0, duration: 0.30,
         update: (p, dt) => {
           spark.position.x += vx * dt;
           spark.position.y += vy * dt;
           spark.position.z += vz * dt;
+          spark.rotation.x += dt * 10;
+          spark.rotation.y += dt * 10;
           spark.material.opacity = 1 - p;
           spark.scale.setScalar(1 - p * 0.7);
         }
@@ -1552,16 +1919,33 @@
 
   function spawnTrailParticle(pos, colorHex) {
     const dot = new THREE.Mesh(
-      new THREE.SphereGeometry(0.11, 8, 8),
-      new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 0.7 })
+      new THREE.SphereGeometry(0.13, 8, 8),
+      new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 0.78 })
     );
     dot.position.copy(pos);
     scene.add(dot);
     activeVFX.push({
-      mesh: dot, age: 0, duration: 0.18,
+      mesh: dot, age: 0, duration: 0.20,
       update: (p) => {
-        dot.material.opacity = 0.7 * (1 - p);
-        dot.scale.setScalar(1 - p * 0.6);
+        dot.material.opacity = 0.78 * (1 - p);
+        dot.scale.setScalar(1 - p * 0.65);
+      }
+    });
+  }
+
+  function spawnDashGhost(pos, yaw, colorHex) {
+    const ghost = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.45, 0.38, 1.55, 12),
+      new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 0.36 })
+    );
+    ghost.position.set(pos.x, pos.y + 0.9, pos.z);
+    ghost.rotation.y = yaw;
+    scene.add(ghost);
+    activeVFX.push({
+      mesh: ghost, age: 0, duration: 0.22,
+      update: (p) => {
+        ghost.material.opacity = 0.36 * (1 - p);
+        ghost.scale.set(1 - p * 0.25, 1, 1 - p * 0.25);
       }
     });
   }
@@ -1572,7 +1956,7 @@
     const isSplit = gameState.mode === 'PVP' && (gameState.phase === 'FIGHTING' || gameState.phase === 'WEAPON_SELECT');
 
     const projectToScreen = (cam, xOffset, widthScale) => {
-      const v = worldPos.clone().add(new THREE.Vector3(0, 1.9, 0));
+      const v = worldPos.clone().add(new THREE.Vector3(0, 1.95, 0));
       v.project(cam);
       if (v.z > 1) return;
       const sx = xOffset + ((v.x + 1) * 0.5) * (rect.width * widthScale);
@@ -1584,7 +1968,7 @@
       el.style.left = `${sx}px`;
       el.style.top = `${sy}px`;
       container.appendChild(el);
-      setTimeout(() => el.remove(), 740);
+      setTimeout(() => el.remove(), 750);
     };
 
     if (isSplit) {
@@ -1610,7 +1994,7 @@
     }
   }
 
-  // 6. GAME STATE & COMBAT ENGINE
+  // 7. GAME STATE & COMBAT ENGINE
   const gameState = {
     phase: 'LOBBY',
     mode: 'CPU',
@@ -1673,7 +2057,7 @@
     });
 
     const grabBeam = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.06, 0.06, 1, 8),
+      new THREE.CylinderGeometry(0.065, 0.065, 1, 8),
       new THREE.MeshBasicMaterial({ color: spec.secondary })
     );
     grabBeam.visible = false;
@@ -1686,9 +2070,9 @@
       yaw: spawnZ > 0 ? Math.PI : 0,
       grounded: true, jumpCount: 0,
       hp: spec.hp, maxHp: spec.hp, rush: 0,
-      guarding: false, stunTimer: 0, chillTimer: 0, comboStacks: 0,
+      guarding: false, stunTimer: 0, chillTimer: 0, hitFlashTimer: 0, comboStacks: 0,
       animTime: Math.random() * 4, animState: 'IDLE',
-      dashTimer: 0, dashCooldown: 0, dashDir: new THREE.Vector3(),
+      dashTimer: 0, dashGhostTimer: 0, dashCooldown: 0, dashDir: new THREE.Vector3(),
       grabState: 'NONE', grabTimer: 0,
       grabPos: new THREE.Vector3(), grabVel: new THREE.Vector3(), grabBeam,
       ultTimer: 0,
@@ -1713,7 +2097,7 @@
       createFighterEntity('P1', gameState.p1Fighter, gameState.p1LeftWeapon, gameState.p1RightWeapon, 0, 7.6),
       createFighterEntity('P2', gameState.p2Fighter, gameState.p2LeftWeapon, gameState.p2RightWeapon, 0, -7.6)
     ];
-    syncHUD();
+    syncHUD(true);
   }
 
   function applyDamage(attacker, target, rawDmg, opts = {}) {
@@ -1748,11 +2132,12 @@
       const defFactor = (1 / target.spec.defenseMult) * (glaciusArmor ? 0.65 : 1.0);
       finalDmg = Math.max(1, Math.round(rawDmg * defFactor));
       sfx.play('hit');
-      spawnBurstSparks(target.pos.clone().add(new THREE.Vector3(0, 1.2, 0)), color, isHeavy ? 15 : 10);
+      target.hitFlashTimer = 0.11;
+      spawnBurstSparks(target.pos.clone().add(new THREE.Vector3(0, 1.2, 0)), color, isHeavy ? 16 : 11);
 
       gameState.hitstop = isHeavy ? 0.055 : 0.04;
-      if (target.slot === 'P1') gameState.shakeP1 = isHeavy ? 0.42 : 0.24;
-      else gameState.shakeP2 = isHeavy ? 0.42 : 0.24;
+      if (target.slot === 'P1') gameState.shakeP1 = isHeavy ? 0.44 : 0.25;
+      else gameState.shakeP2 = isHeavy ? 0.44 : 0.25;
 
       spawnDamagePopup(target.pos, `-${finalDmg}!`, isHeavy ? '#fde047' : '#ffffff');
       if (target.slot === 'P1') vibrate(isHeavy ? 95 : 45);
@@ -1760,13 +2145,13 @@
 
     if (!blocked && attr) {
       if (attr === 'BLAZE') {
-        spawnShockwave(target.pos, 0xf97316, 2.4, 0.28);
+        spawnShockwave(target.pos, 0xf97316, 2.5, 0.28);
       } else if (attr === 'FROST') {
         target.chillTimer = 2.2;
         showToast(`${target.spec.name} 빙결 둔화!`);
       } else if (attr === 'GRAVITY') {
         target.pos.lerp(new THREE.Vector3(0, target.pos.y, 0), 0.22);
-        spawnShockwave(target.pos, 0xa855f7, 2.5, 0.3);
+        spawnShockwave(target.pos, 0xa855f7, 2.6, 0.3);
       }
     }
 
@@ -1820,7 +2205,7 @@
     winner.animState = 'VICTORY';
     winner.guarding = false;
     retractAllArms(winner);
-    spawnShockwave(winner.pos, winner.spec.secondary, 3.8, 0.5);
+    spawnShockwave(winner.pos, winner.spec.secondary, 4.0, 0.52);
 
     if (winner.slot === 'P1') gameState.p1Wins++;
     else gameState.p2Wins++;
@@ -1894,7 +2279,7 @@
     f.grabBeam.visible = false;
   }
 
-  // 7. WEAPON SELECT
+  // 8. WEAPON SELECT
   function enterWeaponSelectPhase() {
     gameState.phase = 'WEAPON_SELECT';
     gameState.wsP1Step = 'L';
@@ -1917,15 +2302,18 @@
     const p2Pane = document.getElementById('ws-pane-p2');
     const p1Pane = document.getElementById('ws-pane-p1');
     const divider = document.getElementById('split-divider');
+    const fxP2 = document.getElementById('fx-pane-p2');
 
     if (gameState.mode === 'PVP') {
       p1Pane.classList.add('split');
       p2Pane.classList.add('split');
       p2Pane.classList.remove('hidden');
+      fxP2.classList.remove('hidden');
       divider.classList.add('active');
     } else {
       p1Pane.classList.remove('split');
       p2Pane.classList.add('hidden');
+      fxP2.classList.add('hidden');
       divider.classList.remove('active');
     }
 
@@ -1994,12 +2382,14 @@
       f.arms.L.weaponId = weaponKey;
       f.arms.L.weapon = ATTRIBUTE_ARMS[weaponKey];
       f.rig.leftArm.setWeapon(weaponKey);
+      spawnBurstSparks(f.pos.clone().add(new THREE.Vector3(-0.6, 1.4, 0)), ATTRIBUTE_ARMS[weaponKey].coilColor, 8);
       gameState[stepKey] = 'R';
     } else if (gameState[stepKey] === 'R') {
       gameState[`${prefix}RightWeapon`] = weaponKey;
       f.arms.R.weaponId = weaponKey;
       f.arms.R.weapon = ATTRIBUTE_ARMS[weaponKey];
       f.rig.rightArm.setWeapon(weaponKey);
+      spawnBurstSparks(f.pos.clone().add(new THREE.Vector3(0.6, 1.4, 0)), ATTRIBUTE_ARMS[weaponKey].coilColor, 8);
       gameState[stepKey] = 'DONE';
     }
 
@@ -2031,6 +2421,7 @@
     document.getElementById('battle-hud').classList.remove('hidden');
     document.getElementById('mobile-controls').classList.toggle('hidden', gameState.mode === 'PVP' || !IS_TOUCH);
     document.getElementById('split-divider').classList.toggle('active', gameState.mode === 'PVP');
+    document.getElementById('fx-pane-p2').classList.toggle('hidden', gameState.mode !== 'PVP');
 
     document.getElementById('hud-p1-name').textContent = fighters[0].spec.name;
     document.getElementById('hud-p2-name').textContent = fighters[1].spec.name;
@@ -2057,7 +2448,8 @@
       }
     }, 1100);
   }
-    // 8. INPUT HANDLERS
+
+  // 9. INPUT HANDLERS
   const keys = {};
   const touchInput = { x: 0, z: 0, guard: false };
 
@@ -2246,7 +2638,7 @@
   });
   hookPadBtn('mb-rush', () => triggerRush(fighters[0]));
 
-  // 9. COMBAT MECHANICS & AI
+  // 10. COMBAT MECHANICS & AI
   function getOpponent(f) {
     return f.slot === 'P1' ? fighters[1] : fighters[0];
   }
@@ -2280,10 +2672,12 @@
     const mv = getMoveInput(f);
     f.dashDir.copy(mv.lengthSq() > 0.05 ? mv.normalize() : right);
     f.dashTimer = 0.22;
+    f.dashGhostTimer = 0;
     f.dashCooldown = f.spec.dashCooldown;
     f.animState = 'DASH';
     sfx.play('dash');
     spawnShockwave(f.pos, f.spec.secondary, 1.6, 0.22);
+    spawnDashGhost(f.pos, f.yaw, f.spec.secondary);
   }
 
   function beginArmCharge(f, side) {
@@ -2458,13 +2852,14 @@
     }
   }
 
-  // 10. FIGHTER UPDATE, SPRING ARMS & ANIMATION
+  // 11. FIGHTER UPDATE, SPRING ARMS & ANIMATION
   function updateFighter(f, dt) {
     const opp = getOpponent(f);
     f.animTime += dt;
 
     if (f.dashCooldown > 0) f.dashCooldown = Math.max(0, f.dashCooldown - dt);
     if (f.chillTimer > 0) f.chillTimer = Math.max(0, f.chillTimer - dt);
+    if (f.hitFlashTimer > 0) f.hitFlashTimer = Math.max(0, f.hitFlashTimer - dt);
     if (f.stunTimer > 0) {
       f.stunTimer = Math.max(0, f.stunTimer - dt);
       if (f.stunTimer === 0 && f.hp > 0 && f.animState === 'HIT') f.animState = 'IDLE';
@@ -2503,10 +2898,14 @@
 
     if (f.dashTimer > 0) {
       f.dashTimer -= dt;
+      f.dashGhostTimer -= dt;
+      if (f.dashGhostTimer <= 0) {
+        f.dashGhostTimer = 0.055;
+        spawnDashGhost(f.pos, f.yaw, f.spec.secondary);
+      }
       f.pos.addScaledVector(f.dashDir, f.spec.dashSpeed * chillMult * dt);
       if (f.dashTimer <= 0 && f.hp > 0) f.animState = 'IDLE';
     } else if (f.slot === 'P2' && gameState.mode !== 'PVP') {
-      // CPU: AI keeps running while guarding so the guard timer can release it
       if (f.grabState === 'NONE') {
         updateAI(f, opp, dt);
         moving = !f.guarding && canAct(f);
@@ -2588,6 +2987,9 @@
       const arm = f.arms[side];
       const armRig = f.rig[side === 'L' ? 'leftArm' : 'rightArm'];
       armRig.chargeSphere.visible = arm.state === 'CHARGING' && arm.isCharged;
+      if (armRig.chargeSphere.visible) {
+        armRig.chargeSphere.scale.setScalar(0.95 + Math.sin(f.animTime * 24) * 0.14);
+      }
 
       if (arm.state === 'CHARGING') {
         arm.chargeTimer += dt;
@@ -2614,7 +3016,7 @@
 
         arm.trailTimer -= dt;
         if (arm.trailTimer <= 0) {
-          arm.trailTimer = 0.032;
+          arm.trailTimer = 0.028;
           spawnTrailParticle(arm.worldPos, arm.weapon.coilColor);
         }
 
@@ -2743,10 +3145,27 @@
     rig.root.rotation.y = f.yaw;
     const t = f.animTime;
 
+    // 점프 높이에 따라 바닥 접지 그림자 크기 및 위치 보정
+    const heightScale = 1 / (1 + f.pos.y * 0.25);
+    rig.groundShadow.position.y = (0.02 - f.pos.y) / f.spec.scale;
+    rig.groundShadow.scale.setScalar(heightScale);
+
+    // 피격 시 히트 플래시 연출
+    if (f.hitFlashTimer > 0) {
+      rig.priMat.emissive.setHex(0xffffff);
+      rig.priMat.emissiveIntensity = 0.85;
+    } else if (f.chillTimer > 0) {
+      rig.priMat.emissive.setHex(0x38bdf8);
+      rig.priMat.emissiveIntensity = 0.45;
+    } else {
+      rig.priMat.emissive.setHex(0x000000);
+      rig.priMat.emissiveIntensity = 0;
+    }
+
     const charging = f.arms.L.state === 'CHARGING' || f.arms.R.state === 'CHARGING';
     rig.secMat.emissiveIntensity = charging || f.guarding || f.animState === 'ULT_WINDUP'
-      ? 1.45
-      : 0.55 + Math.sin(t * 4) * 0.15;
+      ? 1.55
+      : 0.65 + Math.sin(t * 4) * 0.18;
 
     rig.shieldDome.visible = f.guarding;
     if (f.guarding) rig.shieldDome.rotation.y += dt * 2.6;
@@ -2798,7 +3217,9 @@
       const sign = side === 'L' ? -1 : 1;
 
       if (arm.weaponId === 'CHAKRAM') {
-        armRig.weaponMesh.rotation.y += dt * 16;
+        armRig.weaponMesh.rotation.y += dt * 18;
+      } else if (arm.weaponId === 'GRAVITY') {
+        armRig.weaponMesh.rotation.z += dt * 5;
       }
 
       if (arm.state === 'EXTENDING' || arm.state === 'RETRACTING') {
@@ -2826,7 +3247,7 @@
           const bz = invU * invU * p0.z + 2 * invU * u * p1.z + u * u * p2.z;
 
           const helixAngle = u * Math.PI * 10 - t * 18;
-          const helixR = 0.08 * Math.sin(u * Math.PI);
+          const helixR = 0.085 * Math.sin(u * Math.PI);
           const node = armRig.coilNodes[i];
           node.position.set(
             bx + (sideAxis.x * Math.cos(helixAngle) + upAxis.x * Math.sin(helixAngle)) * helixR,
@@ -2849,13 +3270,13 @@
     });
   }
 
-  // 11. CAMERAS & SPLIT-SCREEN
+  // 12. CAMERAS, SPLIT-SCREEN & SCREEN FX
   const cam1SmoothPos = new THREE.Vector3(0, 6, 15);
   const cam1SmoothLook = new THREE.Vector3(0, 1.3, -2);
   const cam2SmoothPos = new THREE.Vector3(0, 6, -15);
   const cam2SmoothLook = new THREE.Vector3(0, 1.3, 2);
 
-  function updateShoulderCamera(cam, smoothPos, smoothLook, self, target, shakeVal, yawOffset, dt) {
+  function updateShoulderCamera(cam, smoothPos, smoothLook, self, target, shakeVal, yawOffset, baseFov, dt) {
     const toTarget = target.pos.clone().sub(self.pos).setY(0);
     if (toTarget.lengthSq() < 0.01) toTarget.set(0, 0, self.slot === 'P1' ? -1 : 1);
     toTarget.normalize();
@@ -2878,6 +3299,10 @@
     smoothPos.lerp(desiredPos, Math.min(1, dt * 9.0));
     smoothLook.lerp(desiredLook, Math.min(1, dt * 11.5));
 
+    // 대시 / 필살기 시 역동적인 FOV 스피드 줌 효과
+    const boostFov = (self.dashTimer > 0 || self.animState === 'ULT_WINDUP' || self.animState === 'ULT_FIRE') ? 7.0 : 0;
+    cam.fov += ((baseFov + boostFov) - cam.fov) * Math.min(1, dt * 10);
+
     cam.position.copy(smoothPos);
     if (shakeVal > 0) {
       cam.position.x += (Math.random() - 0.5) * shakeVal;
@@ -2886,16 +3311,35 @@
     cam.lookAt(smoothLook);
   }
 
+  function updateScreenFxOverlays() {
+    const pane1 = document.getElementById('fx-pane-p1');
+    const pane2 = document.getElementById('fx-pane-p2');
+    if (fighters.length < 2 || gameState.phase !== 'FIGHTING') {
+      pane1.classList.remove('hit-flash', 'chill-tint', 'rush-aura');
+      pane2.classList.remove('hit-flash', 'chill-tint', 'rush-aura');
+      return;
+    }
+    [fighters[0], fighters[1]].forEach((f, idx) => {
+      const pane = idx === 0 ? pane1 : pane2;
+      pane.classList.toggle('hit-flash', f.hitFlashTimer > 0);
+      pane.classList.toggle('chill-tint', f.hitFlashTimer <= 0 && f.chillTimer > 0);
+      pane.classList.toggle('rush-aura', f.hitFlashTimer <= 0 && (f.animState === 'ULT_WINDUP' || f.animState === 'ULT_FIRE'));
+    });
+  }
+
   function renderScene(dt) {
     const wrap = document.getElementById('viewport-wrap');
     const w = wrap.clientWidth;
     const h = wrap.clientHeight;
+
+    updateScreenFxOverlays();
 
     if (gameState.phase === 'LOBBY') {
       const t = performance.now() * 0.00055;
       renderer.setScissorTest(false);
       renderer.setViewport(0, 0, w, h);
       camera1.aspect = w / h;
+      camera1.fov = 48;
       camera1.updateProjectionMatrix();
       camera1.position.set(Math.sin(t) * 11.5, 4.4, Math.cos(t) * 11.5);
       camera1.lookAt(0, 1.25, 0);
@@ -2915,14 +3359,14 @@
       const halfW = Math.floor(w / 2);
       renderer.setScissorTest(true);
 
-      updateShoulderCamera(camera1, cam1SmoothPos, cam1SmoothLook, fighters[0], fighters[1], gameState.shakeP1, 0, dt);
+      updateShoulderCamera(camera1, cam1SmoothPos, cam1SmoothLook, fighters[0], fighters[1], gameState.shakeP1, 0, 50, dt);
       camera1.aspect = halfW / h;
       camera1.updateProjectionMatrix();
       renderer.setViewport(0, 0, halfW, h);
       renderer.setScissor(0, 0, halfW, h);
       renderer.render(scene, camera1);
 
-      updateShoulderCamera(camera2, cam2SmoothPos, cam2SmoothLook, fighters[1], fighters[0], gameState.shakeP2, 0, dt);
+      updateShoulderCamera(camera2, cam2SmoothPos, cam2SmoothLook, fighters[1], fighters[0], gameState.shakeP2, 0, 50, dt);
       camera2.aspect = (w - halfW) / h;
       camera2.updateProjectionMatrix();
       renderer.setViewport(halfW, 0, w - halfW, h);
@@ -2933,22 +3377,31 @@
     } else {
       renderer.setScissorTest(false);
       renderer.setViewport(0, 0, w, h);
-      updateShoulderCamera(camera1, cam1SmoothPos, cam1SmoothLook, fighters[0], fighters[1], gameState.shakeP1, camYawUser, dt);
+      const baseFov = w < 640 ? 56 : 48;
+      updateShoulderCamera(camera1, cam1SmoothPos, cam1SmoothLook, fighters[0], fighters[1], gameState.shakeP1, camYawUser, baseFov, dt);
       camera1.aspect = w / h;
-      camera1.fov = w < 640 ? 56 : 48;
       camera1.updateProjectionMatrix();
       renderer.render(scene, camera1);
     }
   }
 
-  // 12. HUD & LOBBY
-  function syncHUD() {
+  // 13. HUD & LOBBY
+  function syncHUD(instantTrail = false) {
     if (fighters.length < 2) return;
     [fighters[0], fighters[1]].forEach((f, i) => {
       const tag = i === 0 ? 'p1' : 'p2';
       const pct = Math.max(0, Math.min(100, (f.hp / f.maxHp) * 100));
       const bar = document.getElementById(`hud-${tag}-hp`);
+      const trail = document.getElementById(`hud-${tag}-hp-trail`);
       bar.style.width = `${pct}%`;
+      if (instantTrail) {
+        trail.style.transition = 'none';
+        trail.style.width = `${pct}%`;
+        trail.offsetHeight;
+        trail.style.transition = '';
+      } else {
+        trail.style.width = `${pct}%`;
+      }
       bar.classList.toggle('danger', pct <= 28);
       document.getElementById(`hud-${tag}-hp-txt`).textContent = `${Math.ceil(f.hp)} / ${f.maxHp}`;
 
@@ -3052,6 +3505,7 @@
     document.getElementById('battle-hud').classList.add('hidden');
     document.getElementById('mobile-controls').classList.add('hidden');
     document.getElementById('split-divider').classList.remove('active');
+    document.getElementById('fx-pane-p2').classList.add('hidden');
     document.getElementById('lobby-overlay').classList.remove('hidden');
     spawnHangarPreview();
   }
@@ -3067,7 +3521,7 @@
     e.target.textContent = sfx.enabled ? '🔊' : '🔇';
   });
 
-  // 13. MAIN LOOP
+  // 14. MAIN LOOP
   function onResize() {
     const wrap = document.getElementById('viewport-wrap');
     renderer.setSize(wrap.clientWidth, wrap.clientHeight, false);
@@ -3080,6 +3534,21 @@
     requestAnimationFrame(tick);
     const dt = Math.min(0.05, (now - prevTime) / 1000);
     prevTime = now;
+
+    // 경기장 소품 & 대기 입자 애니메이션
+    const elapsed = now * 0.001;
+    for (let i = 0; i < stageAnimatedProps.length; i++) {
+      const p = stageAnimatedProps[i];
+      if (p.type === 'HOVER_RING') {
+        p.mesh.position.y = p.baseY + Math.sin(elapsed * 3.2 + p.phase) * 0.14;
+      } else if (p.type === 'SPIN_CRYSTAL') {
+        p.mesh.rotation.y = elapsed * 1.4 + p.phase;
+        p.mesh.position.y = p.baseY + Math.sin(elapsed * 2.2 + p.phase) * 0.16;
+      } else if (p.type === 'AMBIENT_MOTE') {
+        p.mesh.position.y = p.baseY + Math.sin(elapsed * p.speed + p.phase) * 0.65;
+        p.mesh.rotation.y += dt * 1.5;
+      }
+    }
 
     if (gameState.phase === 'FIGHTING' && fighters.length === 2) {
       if (fighters[0].hp <= 0) resolveKO(fighters[1], fighters[0]);
