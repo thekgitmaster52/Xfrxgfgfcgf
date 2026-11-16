@@ -590,6 +590,64 @@
     width: 100%;
   }
   .champ-start-btn:hover { transform: translateY(-2px); filter: brightness(1.08); }
+  .champ-start-btn.waiting { background: linear-gradient(90deg, #475569, #334155); box-shadow: none; cursor: default; }
+
+  /* ===== 방 코드 대전 ===== */
+  .net-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+    padding: 10px 14px;
+    border-radius: 16px;
+    border: 2px solid rgba(6, 182, 212, 0.55);
+  }
+  .net-bar.online { border-color: #10b981; box-shadow: 0 0 18px rgba(16, 185, 129, 0.45); }
+  .net-left { flex: 1; min-width: 200px; }
+  .net-title { font-size: 13px; font-weight: 900; color: #0f172a; }
+  .net-title small { font-weight: 700; color: #475569; }
+  .net-status { font-size: 11.5px; font-weight: 700; color: #0369a1; margin-top: 2px; line-height: 1.35; }
+  .net-code-show {
+    font-size: 30px;
+    font-weight: 900;
+    letter-spacing: 0.22em;
+    color: #0f172a;
+    background: linear-gradient(180deg, #ecfeff, #cffafe);
+    border: 2px dashed #06b6d4;
+    border-radius: 12px;
+    padding: 2px 12px 2px 18px;
+    font-variant-numeric: tabular-nums;
+  }
+  .net-code-show.hidden, .net-btn.hidden { display: none; }
+  .net-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .net-btn {
+    border: none;
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 900;
+    color: #fff;
+    cursor: pointer;
+    background: linear-gradient(90deg, #0891b2, #06b6d4);
+  }
+  .net-btn.join { background: linear-gradient(90deg, #059669, #10b981); }
+  .net-btn.leave { background: linear-gradient(90deg, #be123c, #f43f5e); }
+  .net-btn:disabled { opacity: 0.45; cursor: default; }
+  #net-code-input {
+    width: 96px;
+    padding: 7px 10px;
+    border-radius: 999px;
+    border: 2px solid #cbd5e1;
+    font-size: 15px;
+    font-weight: 900;
+    letter-spacing: 0.2em;
+    text-align: center;
+    user-select: text;
+    -webkit-user-select: text;
+  }
+  #net-code-input:focus { outline: none; border-color: #06b6d4; }
 
   #weapon-select-overlay {
     position: absolute;
@@ -1101,6 +1159,20 @@
         </div>
       </div>
 
+      <div class="net-bar" id="net-bar">
+        <div class="net-left">
+          <div class="net-title">🌐 방 코드 대전 <small>— 다른 기기(폰·PC)와 1:1</small></div>
+          <div class="net-status" id="net-status">방을 만들거나, 상대의 4자리 코드를 입력해 입장하세요.</div>
+        </div>
+        <div class="net-code-show hidden" id="net-code-show">----</div>
+        <div class="net-actions">
+          <button class="net-btn host" id="btn-net-host">방 만들기</button>
+          <input id="net-code-input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="코드 4자리" autocomplete="off">
+          <button class="net-btn join" id="btn-net-join">입장</button>
+          <button class="net-btn leave hidden" id="btn-net-leave">나가기</button>
+        </div>
+      </div>
+
       <div class="stage-bar">
         <div style="font-size:13px;font-weight:900;color:#0f172a;">🏟️ 챔피언십 경기장:</div>
         <div class="stage-options">
@@ -1234,6 +1306,11 @@
         <td>1.3초 안에 이어 맞히면 콤보. 좌우 교대 = ONE-TWO(+15%), 차지 펀치는 상대를 띄우고 공중 추가타 = AIR JUGGLE(+20%), 3콤보 뒤 차지 펀치 = COMBO FINISHER(+50%·슬로모션)</td>
       </tr>
       <tr>
+        <td><strong>🌐 방 코드 대전</strong></td>
+        <td colspan="2">로비 → [방 만들기] 하면 4자리 코드 표시 / 상대 기기에서 코드 입력 → [입장]</td>
+        <td>방을 만든 쪽이 1P(호스트), 입장한 쪽이 2P. 각자 자기 기기에서 1P 조작키(또는 터치)로 플레이합니다. 처음 연결할 때만 인터넷이 필요하고(매칭 서버), 연결 후에는 두 기기가 직접 통신합니다. 같은 PC의 다른 탭끼리는 인터넷 없이도 연결됩니다.</td>
+      </tr>
+      <tr>
         <td><strong>최후의 3초 투혼</strong></td>
         <td colspan="2">자동 발동 (라운드당 1회)</td>
         <td>치명타를 맞으면 HP 1로 버티며 3초 카운트 시작. 그 안에 한 대라도 맞히면 HP 25%로 부활, 못 맞히거나 먼저 맞으면 K.O.</td>
@@ -1242,6 +1319,7 @@
   </table>
 </section>
 
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (() => {
@@ -2474,7 +2552,7 @@
     ui.classList.remove('hidden');
     const isSplit = gameState.mode === 'PVP';
     ui.style.left = isSplit ? (f.slot === 'P1' ? '25%' : '75%') : '50%';
-    document.getElementById('ls-name').textContent = `${f.slot === 'P1' ? '1P' : (gameState.mode === 'PVP' ? '2P' : 'CPU')} ${f.spec.name}`;
+    document.getElementById('ls-name').textContent = `${f.slot === 'P1' ? '1P' : (isP2Human() ? '2P' : 'CPU')} ${f.spec.name}`;
     const numEl = document.getElementById('ls-num');
     const n = String(Math.max(1, Math.ceil(f.lastStand)));
     if (numEl.textContent !== n) {
@@ -2870,8 +2948,8 @@
         }
         gameState.phase = 'MATCH_OVER';
         document.getElementById('res-heading').textContent = p1Won
-          ? (gameState.mode === 'ARCADE' ? 'GRAND CHAMPION!' : '1P VICTORY!')
-          : (gameState.mode === 'PVP' ? '2P VICTORY!' : 'CPU VICTORY!');
+          ? (gameState.mode === 'ARCADE' ? 'GRAND CHAMPION!' : gameState.mode === 'ONLINE' ? 'YOU WIN! 🏆' : '1P VICTORY!')
+          : (gameState.mode === 'ONLINE' ? 'YOU LOSE…' : gameState.mode === 'PVP' ? '2P VICTORY!' : 'CPU VICTORY!');
         document.getElementById('res-desc').textContent = p1Won
           ? `${fighters[0].spec.name} (${fighters[0].spec.kor})가 AERO ARMS 챔피언십에서 우승했습니다!`
           : `${fighters[1].spec.name} (${fighters[1].spec.kor})의 강력한 승리입니다!`;
@@ -2929,7 +3007,7 @@
   function enterWeaponSelectPhase() {
     gameState.phase = 'WEAPON_SELECT';
     gameState.wsP1Step = 'L';
-    gameState.wsP2Step = gameState.mode === 'PVP' ? 'L' : 'DONE';
+    gameState.wsP2Step = isP2Human() ? 'L' : 'DONE';
     gameState.wsP1Focus = 0;
     gameState.wsP2Focus = 0;
 
@@ -2954,12 +3032,20 @@
     const divider = document.getElementById('split-divider');
     const fxP2 = document.getElementById('fx-pane-p2');
 
+    p1Pane.classList.toggle('hidden', isGuest());
+    document.querySelector('#ws-pane-p2 .ws-sub').textContent = isGuest()
+      ? '클릭 또는 A / D + Space(Q/E) 선택'
+      : '클릭 또는 ← / → 방향키 + Enter / U 선택';
     if (gameState.mode === 'PVP') {
       p1Pane.classList.add('split');
       p2Pane.classList.add('split');
       p2Pane.classList.remove('hidden');
       fxP2.classList.remove('hidden');
       divider.classList.add('active');
+    } else if (isGuest()) {
+      p2Pane.classList.remove('split', 'hidden');
+      fxP2.classList.add('hidden');
+      divider.classList.remove('active');
     } else {
       p1Pane.classList.remove('split');
       p2Pane.classList.add('hidden');
@@ -3015,11 +3101,12 @@
     };
 
     renderPane('P1');
-    if (gameState.mode === 'PVP') renderPane('P2');
+    if (isP2Human()) renderPane('P2');
   }
 
   function chooseWeaponForSlot(slot, weaponKey) {
     if (gameState.phase !== 'WEAPON_SELECT') return;
+    if (isGuest()) { if (slot === 'P2') netSend({ t: 'ws', key: weaponKey }); return; }
     sfx.play('select');
 
     const isP1 = slot === 'P1';
@@ -3046,7 +3133,7 @@
     renderWeaponSelectUI();
 
     if (gameState.wsP1Step === 'DONE' && gameState.wsP2Step === 'DONE') {
-      if (gameState.mode !== 'PVP') {
+      if (!isP2Human()) {
         const cpuL = WEAPON_KEYS[Math.floor(Math.random() * WEAPON_KEYS.length)];
         const cpuR = WEAPON_KEYS[Math.floor(Math.random() * WEAPON_KEYS.length)];
         gameState.p2LeftWeapon = cpuL;
@@ -3068,6 +3155,21 @@
 
   function startBattleRound() {
     spawnMatchFighters();
+    setupBattleHUD();
+    gameState.phase = 'INTRO';
+    showBanner(`ROUND ${gameState.roundNumber} — READY!`, 1050);
+    setTimeout(() => {
+      if (gameState.phase === 'INTRO') {
+        gameState.phase = 'FIGHTING';
+        showBanner('FIGHT!', 800);
+      }
+    }, 1100);
+  }
+
+  function isP2Human() { return gameState.mode === 'PVP' || gameState.mode === 'ONLINE'; }
+
+  // 전투 HUD 세팅 (호스트·게스트 공통)
+  function setupBattleHUD() {
     gameState.slowmo = 0;
     gameState.hitstop = 0;
     hideComboMeters();
@@ -3079,7 +3181,7 @@
 
     document.getElementById('hud-p1-name').textContent = fighters[0].spec.name;
     document.getElementById('hud-p2-name').textContent = fighters[1].spec.name;
-    document.getElementById('hud-p2-slot').textContent = gameState.mode === 'PVP' ? '2P' : 'CPU';
+    document.getElementById('hud-p2-slot').textContent = isGuest() ? 'YOU' : (isP2Human() ? '2P' : 'CPU');
     document.getElementById('hud-p1-wl').textContent = `L: ${ATTRIBUTE_ARMS[gameState.p1LeftWeapon].short}`;
     document.getElementById('hud-p1-wr').textContent = `R: ${ATTRIBUTE_ARMS[gameState.p1RightWeapon].short}`;
     document.getElementById('hud-p2-wl').textContent = `L: ${ATTRIBUTE_ARMS[gameState.p2LeftWeapon].short}`;
@@ -3092,15 +3194,6 @@
     gameState.timerAccum = 0;
     document.getElementById('clock-num').textContent = '99';
     document.getElementById('clock-num').classList.remove('urgent');
-
-    gameState.phase = 'INTRO';
-    showBanner(`ROUND ${gameState.roundNumber} — READY!`, 1050);
-    setTimeout(() => {
-      if (gameState.phase === 'INTRO') {
-        gameState.phase = 'FIGHTING';
-        showBanner('FIGHT!', 800);
-      }
-    }, 1100);
   }
 
   // 9. INPUT HANDLERS
@@ -3124,6 +3217,15 @@
           e.preventDefault();
         }
       }
+    }
+    // 온라인 게스트: 내 조작은 로컬에서 실행하지 않고 호스트로 전송
+    if (isGuest()) {
+      const tag2 = e.target && e.target.tagName;
+      if (tag2 === 'INPUT' || tag2 === 'TEXTAREA') return;
+      if (keys[e.code]) return;
+      keys[e.code] = true;
+      if (GUEST_KEYMAP[e.code]) guestSendKey(e.code, true, e.timeStamp);
+      return;
     }
     if (keys[e.code]) return;
     keys[e.code] = true;
@@ -3177,6 +3279,11 @@
   });
 
   window.addEventListener('keyup', (e) => {
+    if (isGuest()) {
+      if (keys[e.code] && GUEST_KEYMAP[e.code]) guestSendKey(e.code, false, e.timeStamp);
+      keys[e.code] = false;
+      return;
+    }
     keys[e.code] = false;
     if (gameState.phase !== 'FIGHTING') return;
     const p1 = fighters[0];
@@ -3201,6 +3308,10 @@
   });
 
   window.addEventListener('blur', () => {
+    if (isGuest()) {
+      Object.keys(keys).forEach((k) => { if (keys[k] && GUEST_KEYMAP[k]) guestSendKey(k, false, performance.now()); });
+      Object.values(PAD_CODES).forEach((c) => netSend({ t: 'k', c, d: 0, ts: performance.now() }));
+    }
     Object.keys(keys).forEach((k) => { keys[k] = false; });
     dragCam = false;
     touchInput.guard = false;
@@ -3225,11 +3336,21 @@
   // 좌+우클릭 동시 입력은 pointerdown이 한 번만 발생하므로 mousedown/mouseup으로 처리
   canvas.addEventListener('mousedown', (e) => {
     if (gameState.phase !== 'FIGHTING') return;
+    if (isGuest()) {
+      if (e.button === 0) netSend({ t: 'k', c: 'KeyU', d: 1, ts: e.timeStamp });
+      if (e.button === 2) netSend({ t: 'k', c: 'KeyI', d: 1, ts: e.timeStamp });
+      return;
+    }
     if (e.button === 0) beginArmCharge(fighters[0], 'L', e.timeStamp);
     if (e.button === 2) beginArmCharge(fighters[0], 'R', e.timeStamp);
   });
   window.addEventListener('mouseup', (e) => {
     if (gameState.phase !== 'FIGHTING') return;
+    if (isGuest()) {
+      if (e.button === 0) netSend({ t: 'k', c: 'KeyU', d: 0, ts: e.timeStamp });
+      if (e.button === 2) netSend({ t: 'k', c: 'KeyI', d: 0, ts: e.timeStamp });
+      return;
+    }
     if (e.button === 0) releaseArmPunch(fighters[0], 'L');
     if (e.button === 2) releaseArmPunch(fighters[0], 'R');
   });
@@ -3267,6 +3388,7 @@
     touchInput.x = 0;
     touchInput.z = 0;
     joyStick.style.transform = 'translate(0px, 0px)';
+    if (isGuest()) guestSendJoy(true);
   };
   joyArea.addEventListener('touchend', endStick);
   joyArea.addEventListener('touchcancel', endStick);
@@ -3280,6 +3402,7 @@
     joyStick.style.transform = `translate(${dx}px, ${dy}px)`;
     touchInput.x = dx / 40;
     touchInput.z = dy / 40;
+    if (isGuest()) guestSendJoy();
   }
 
   function hookPadBtn(id, downFn, upFn) {
@@ -3288,11 +3411,19 @@
       e.preventDefault();
       sfx.init();
       el.classList.add('pressed');
+      if (isGuest()) {
+        if (gameState.phase === 'FIGHTING' && PAD_CODES[id]) netSend({ t: 'k', c: PAD_CODES[id], d: 1, ts: e.timeStamp });
+        return;
+      }
       if (gameState.phase === 'FIGHTING' && downFn) downFn(e.timeStamp);
     }, { passive: false });
     const release = (e) => {
       e.preventDefault();
       el.classList.remove('pressed');
+      if (isGuest()) {
+        if (PAD_CODES[id]) netSend({ t: 'k', c: PAD_CODES[id], d: 0, ts: e.timeStamp });
+        return;
+      }
       if (gameState.phase === 'FIGHTING' && upFn) upFn();
     };
     el.addEventListener('touchend', release);
@@ -3381,7 +3512,7 @@
     if (f.kickState !== 'NONE' || f.dashTimer > 0) return;
     // 연속 로우킥 불가: 킥 후에는 펀치(또는 리프트)를 한 번 던져야 다시 찰 수 있음 + 최소 1.6초 쿨다운
     if (f.kickLocked || f.kickCooldown > 0) {
-      const human = f.slot === 'P1' || gameState.mode === 'PVP';
+      const human = f.slot === 'P1' || isP2Human();
       if (human) spawnDamagePopup(f.pos, f.kickLocked ? '연속 킥 불가 — 펀치를 섞으세요' : '킥 쿨다운', '#94a3b8', 'tech');
       return;
     }
@@ -3568,11 +3699,16 @@
       if (keys['KeyS']) fz -= 1;
       sx += touchInput.x;
       fz -= touchInput.z;
-    } else if (gameState.mode === 'PVP') {
-      if (keys['ArrowLeft']) sx -= 1;
-      if (keys['ArrowRight']) sx += 1;
-      if (keys['ArrowUp']) fz += 1;
-      if (keys['ArrowDown']) fz -= 1;
+    } else if (isP2Human()) {
+      const K = gameState.mode === 'ONLINE' ? net.remoteKeys : keys;
+      if (K['ArrowLeft']) sx -= 1;
+      if (K['ArrowRight']) sx += 1;
+      if (K['ArrowUp']) fz += 1;
+      if (K['ArrowDown']) fz -= 1;
+      if (gameState.mode === 'ONLINE') {
+        sx += net.remoteTouch.x;
+        fz -= net.remoteTouch.z;
+      }
     }
     const v = new THREE.Vector3().addScaledVector(right, sx).addScaledVector(fwd, fz);
     if (v.length() > 1) v.normalize();
@@ -3731,7 +3867,7 @@
     if (canAct(f) && f.arms.L.state === 'IDLE' && f.arms.R.state === 'IDLE' && f.grabState === 'NONE' &&
         f.dashTimer <= 0 && f.kickState === 'NONE') {
       if (f.slot === 'P1') f.guarding = Boolean(keys['KeyC'] || touchInput.guard);
-      else if (gameState.mode === 'PVP') f.guarding = Boolean(keys['KeyO']);
+      else if (isP2Human()) f.guarding = Boolean(gameState.mode === 'ONLINE' ? net.remoteKeys['KeyO'] : keys['KeyO']);
     } else if (!canAct(f)) {
       f.guarding = false;
     }
@@ -3748,7 +3884,7 @@
       }
       f.pos.addScaledVector(f.dashDir, f.spec.dashSpeed * chillMult * dt);
       if (f.dashTimer <= 0 && f.hp > 0) f.animState = 'IDLE';
-    } else if (f.slot === 'P2' && gameState.mode !== 'PVP') {
+    } else if (f.slot === 'P2' && !isP2Human()) {
       if (f.grabState === 'NONE') {
         updateAI(f, opp, dt);
         moving = canAct(f) && f.kickState === 'NONE';
@@ -4246,7 +4382,7 @@
       return;
     }
     const anyLS = fighters.some((f) => f.lastStand > 0);
-    [fighters[0], fighters[1]].forEach((f, idx) => {
+    (isGuest() ? [fighters[1], fighters[0]] : [fighters[0], fighters[1]]).forEach((f, idx) => {
       const pane = idx === 0 ? pane1 : pane2;
       pane.classList.toggle('hit-flash', f.hitFlashTimer > 0);
       pane.classList.toggle('chill-tint', f.hitFlashTimer <= 0 && f.chillTimer > 0);
@@ -4310,7 +4446,9 @@
       renderer.setScissorTest(false);
       renderer.setViewport(0, 0, w, h);
       const baseFov = w < 640 ? 56 : 48;
-      updateShoulderCamera(camera1, cam1SmoothPos, cam1SmoothLook, fighters[0], fighters[1], gameState.shakeP1, camYawUser, baseFov, dt, gameState.kickP1);
+      const me = meIdx();
+      updateShoulderCamera(camera1, cam1SmoothPos, cam1SmoothLook, fighters[me], fighters[1 - me],
+        me ? gameState.shakeP2 : gameState.shakeP1, camYawUser, baseFov, dt, me ? gameState.kickP2 : gameState.kickP1);
       camera1.aspect = w / h;
       camera1.updateProjectionMatrix();
       renderer.render(scene, camera1);
@@ -4369,6 +4507,15 @@
           <div class="f-passive-tag">${f.passiveShort}</div>
         `;
         tile.onclick = () => {
+          if (gameState.mode === 'ONLINE') {
+            // 온라인: 호스트는 1P만, 게스트는 2P만 고를 수 있음
+            if (net.role === 'guest') {
+              if (slot === 'p2') { sfx.play('select'); netSend({ t: 'pick', id: f.id }); }
+              else showToast('1P는 호스트가 고릅니다');
+              return;
+            }
+            if (slot === 'p2') { showToast('2P 파이터는 상대가 고릅니다'); return; }
+          }
           sfx.play('select');
           if (slot === 'p1') gameState.p1Fighter = f.id;
           else gameState.p2Fighter = f.id;
@@ -4384,7 +4531,8 @@
     });
 
     document.getElementById('lobby-p2-heading').textContent =
-      gameState.mode === 'PVP' ? '2P 파이터 선택' : gameState.mode === 'ARCADE' ? '아케이드 연전 모드' : 'CPU 라이벌 선택';
+      gameState.mode === 'ONLINE' ? (net.role === 'guest' ? '2P 내 파이터 선택 (온라인)' : '2P 온라인 상대')
+        : gameState.mode === 'PVP' ? '2P 파이터 선택' : gameState.mode === 'ARCADE' ? '아케이드 연전 모드' : 'CPU 라이벌 선택';
   }
 
   function spawnHangarPreview() {
@@ -4399,6 +4547,10 @@
 
   document.querySelectorAll('.l-pill').forEach((btn) => {
     btn.addEventListener('click', () => {
+      if (gameState.mode === 'ONLINE' && (btn.dataset.mode || btn.dataset.diff || net.role === 'guest')) {
+        showToast(net.role === 'guest' && btn.dataset.stage ? '경기장은 호스트가 고릅니다' : '온라인 연결 중에는 바꿀 수 없습니다 (나가기 후 변경)');
+        return;
+      }
       sfx.play('select');
       if (btn.dataset.mode) {
         gameState.mode = btn.dataset.mode;
@@ -4417,6 +4569,7 @@
 
   document.getElementById('btn-champ-start').addEventListener('click', () => {
     sfx.init();
+    if (isGuest()) { showToast('호스트가 경기를 시작합니다'); return; }
     sfx.play('select');
     gameState.arcadeIndex = 0;
     enterWeaponSelectPhase();
@@ -4424,6 +4577,7 @@
 
   document.getElementById('btn-next-or-rematch').addEventListener('click', () => {
     sfx.play('select');
+    if (isGuest()) { netSend({ t: 'act', a: 'rematch' }); return; }
     if (gameState.mode === 'ARCADE' && gameState.p1Wins >= gameState.roundsToWin) gameState.arcadeIndex = 0;
     enterWeaponSelectPhase();
   });
@@ -4446,8 +4600,12 @@
     spawnHangarPreview();
   }
 
-  document.getElementById('btn-back-lobby').addEventListener('click', returnToLobby);
-  document.getElementById('btn-to-lobby').addEventListener('click', returnToLobby);
+  const onLobbyBtn = () => {
+    if (isGuest()) { netSend({ t: 'act', a: 'lobby' }); return; }
+    returnToLobby();
+  };
+  document.getElementById('btn-back-lobby').addEventListener('click', onLobbyBtn);
+  document.getElementById('btn-to-lobby').addEventListener('click', onLobbyBtn);
   document.getElementById('btn-cam-reset').addEventListener('click', () => {
     camYawUser = 0;
     showToast('카메라 시선 고정 리셋');
@@ -4456,6 +4614,504 @@
     sfx.enabled = !sfx.enabled;
     e.target.textContent = sfx.enabled ? '🔊' : '🔇';
   });
+
+  // 15. ONLINE ROOM — 4자리 방 코드 · WebRTC P2P (PeerJS) / 같은 기기 탭은 BroadcastChannel
+  //  구조:  [호스트 = 1P, 게임 판정 전부 계산]  ──스냅샷 30Hz + 이펙트──▶  [게스트 = 2P, 화면만 재현]
+  //         [호스트]  ◀──키 입력(누름/뗌 + 입력시각)──  [게스트]
+  const ROOM_PREFIX = 'aero-arms-room-v1-';
+  const net = {
+    role: null, code: null, peer: null, conn: null, bc: null, connected: false,
+    remoteKeys: {}, remoteTouch: { x: 0, z: 0 },
+    fxQueue: [], fxDepth: 0, sendAccum: 0, lastPhase: null,
+    joinTimer: null, bcJoinIv: null, joySent: 0
+  };
+  function isGuest() { return net.role === 'guest' && net.connected; }
+  function isHost() { return net.role === 'host' && net.connected; }
+  function meIdx() { return isGuest() ? 1 : 0; }
+
+  const GUEST_KEYMAP = {
+    KeyW: 'ArrowUp', KeyS: 'ArrowDown', KeyA: 'ArrowLeft', KeyD: 'ArrowRight',
+    ArrowUp: 'ArrowUp', ArrowDown: 'ArrowDown', ArrowLeft: 'ArrowLeft', ArrowRight: 'ArrowRight',
+    KeyQ: 'KeyU', KeyE: 'KeyI', KeyC: 'KeyO', Space: 'Enter', Enter: 'Enter',
+    ShiftLeft: 'KeyK', KeyV: 'KeyK', KeyR: 'KeyL', KeyF: 'KeyL'
+  };
+  const PAD_CODES = { 'mb-l': 'KeyU', 'mb-r': 'KeyI', 'mb-guard': 'KeyO', 'mb-dash': 'Enter', 'mb-kick': 'KeyK', 'mb-rush': 'KeyL' };
+
+  // ---------- 전송 ----------
+  function netSend(obj) {
+    try {
+      if (net.conn && net.conn.open) net.conn.send(obj);
+      else if (net.bc) net.bc.postMessage(obj);
+    } catch (_) {}
+  }
+  function netStatus(msg) { document.getElementById('net-status').textContent = msg; }
+  function netRandomCode() { return String(Math.floor(1000 + Math.random() * 9000)); }
+  function netHasPeer() { return typeof window.Peer === 'function'; }
+
+  function updateNetUI() {
+    const has = !!net.role;
+    document.getElementById('btn-net-host').disabled = has;
+    document.getElementById('btn-net-join').disabled = has;
+    document.getElementById('net-code-input').disabled = has;
+    document.getElementById('btn-net-leave').classList.toggle('hidden', !has);
+    const show = document.getElementById('net-code-show');
+    show.classList.toggle('hidden', net.role !== 'host');
+    if (net.role === 'host') show.textContent = net.code;
+    document.getElementById('net-bar').classList.toggle('online', net.connected);
+    const start = document.getElementById('btn-champ-start');
+    start.textContent = isGuest()
+      ? '⏳ 호스트가 경기를 시작하길 기다리는 중…'
+      : (isHost() ? '🌐 온라인 대전 시작 — 무기 선택 입장 🌐' : '🏆 CHAMPIONSHIP START — 경기 시작 (무기 선택 입장) 🏆');
+    start.classList.toggle('waiting', isGuest());
+  }
+
+  function netReset() {
+    clearTimeout(net.joinTimer);
+    clearInterval(net.bcJoinIv);
+    const { conn, peer, bc } = net;
+    Object.assign(net, {
+      role: null, code: null, peer: null, conn: null, bc: null, connected: false,
+      remoteKeys: {}, remoteTouch: { x: 0, z: 0 }, fxQueue: [], lastPhase: null, joinTimer: null, bcJoinIv: null
+    });
+    try { if (conn) conn.close(); } catch (_) {}
+    try { if (peer) peer.destroy(); } catch (_) {}
+    try { if (bc) bc.close(); } catch (_) {}
+  }
+
+  function openBC(code) {
+    if (typeof BroadcastChannel !== 'function') return false;
+    try { if (net.bc) net.bc.close(); } catch (_) {}
+    net.bc = new BroadcastChannel(`aero-arms-${code}`);
+    net.bc.onmessage = (e) => onNetMessage(e.data);
+    return true;
+  }
+
+  // ---------- 방 만들기 (호스트) ----------
+  function netHost(attempt = 0) {
+    netReset();
+    const code = netRandomCode();
+    net.role = 'host';
+    net.code = code;
+    updateNetUI();
+    if (!netHasPeer()) {
+      openBC(code);
+      netStatus(`방 코드 ${code} — 인터넷 연결 모듈을 못 불러와 같은 기기의 다른 탭에서만 입장 가능`);
+      return;
+    }
+    netStatus(`방 코드 ${code} 생성 중…`);
+    const peer = new Peer(ROOM_PREFIX + code, { debug: 0 });
+    net.peer = peer;
+    peer.on('open', () => {
+      if (net.peer !== peer) return;
+      openBC(code); // 같은 기기 탭에서도 입장 가능하도록 병행
+      netStatus(`방 코드 ${code} — 상대 기기에서 이 코드를 입력하면 연결됩니다`);
+    });
+    peer.on('connection', (c) => {
+      if (net.peer !== peer) return;
+      if (net.connected || net.conn) {
+        c.on('open', () => { c.send({ t: 'full' }); setTimeout(() => c.close(), 300); });
+        return;
+      }
+      net.conn = c;
+      bindConn(c);
+    });
+    peer.on('error', (err) => {
+      if (net.peer !== peer) return;
+      if (err.type === 'unavailable-id' && attempt < 5) { netHost(attempt + 1); return; }
+      if (net.connected) return;
+      openBC(code);
+      netStatus(`방 코드 ${code} — 인터넷 매칭 서버 연결 실패(${err.type}). 같은 기기의 다른 탭에서만 입장 가능`);
+    });
+    peer.on('disconnected', () => { if (net.peer === peer && !peer.destroyed) { try { peer.reconnect(); } catch (_) {} } });
+  }
+
+  // ---------- 코드 입력해서 입장 (게스트) ----------
+  function netJoin(code) {
+    code = String(code || '').trim();
+    if (!/^\d{4}$/.test(code)) { netStatus('방 코드는 숫자 4자리입니다.'); return; }
+    netReset();
+    net.role = 'guest';
+    net.code = code;
+    updateNetUI();
+    netStatus(`${code} 방에 입장 중…`);
+
+    // 같은 기기 탭 경로 (BroadcastChannel): 1초마다 입장 요청
+    if (openBC(code)) {
+      const knock = () => { if (!net.connected && net.bc) net.bc.postMessage({ t: 'join' }); };
+      knock();
+      net.bcJoinIv = setInterval(knock, 1000);
+    }
+
+    if (netHasPeer()) {
+      const peer = new Peer({ debug: 0 });
+      net.peer = peer;
+      peer.on('open', () => {
+        if (net.peer !== peer || net.connected) return;
+        const c = peer.connect(ROOM_PREFIX + code, { reliable: true, serialization: 'json' });
+        net.conn = c;
+        bindConn(c);
+      });
+      peer.on('error', (err) => {
+        if (net.peer !== peer || net.connected) return;
+        if (err.type === 'peer-unavailable') netStatus(`${code} 방을 찾을 수 없습니다. 코드를 확인하거나 호스트가 방을 만들었는지 확인하세요.`);
+        else netStatus(`연결 오류(${err.type}) — 다시 시도해 주세요.`);
+      });
+    }
+    net.joinTimer = setTimeout(() => {
+      if (net.role === 'guest' && !net.connected) {
+        netStatus(`${code} 방 연결 시간 초과. 코드와 인터넷 연결을 확인하세요.`);
+        netReset();
+        updateNetUI();
+      }
+    }, 15000);
+  }
+
+  function bindConn(c) {
+    c.on('open', () => { if (net.conn === c) onConnected(); });
+    c.on('data', (d) => { if (net.conn === c) onNetMessage(d); });
+    c.on('close', () => { if (net.conn === c) onDisconnected(); });
+    c.on('error', () => {});
+  }
+
+  function onConnected() {
+    if (net.connected) return;
+    net.connected = true;
+    clearTimeout(net.joinTimer);
+    clearInterval(net.bcJoinIv);
+    // 다른 경로 정리: PeerJS로 붙었으면 BroadcastChannel 닫기
+    if (net.conn && net.conn.open && net.bc) { try { net.bc.close(); } catch (_) {} net.bc = null; }
+    gameState.mode = 'ONLINE';
+    document.querySelectorAll('[data-mode]').forEach((b) => b.classList.remove('active'));
+    netStatus(net.role === 'host'
+      ? `✅ 연결됨! (방 ${net.code}) 상대가 2P입니다. 경기장·파이터를 고르고 시작하세요.`
+      : `✅ 연결됨! (방 ${net.code}) 당신은 2P입니다. 오른쪽에서 파이터를 고르고 호스트를 기다리세요.`);
+    NET_FX.toast('🌐 온라인 상대와 연결되었습니다!');
+    NET_FX.sfx('revive');
+    if (gameState.phase !== 'LOBBY') returnToLobby();
+    if (net.role === 'guest') netSend({ t: 'pick', id: gameState.p2Fighter });
+    renderLobby();
+    updateNetUI();
+  }
+
+  function onDisconnected(byMe = false) {
+    if (!net.role) return;
+    const was = net.connected;
+    netReset();
+    gameState.mode = 'CPU';
+    document.querySelectorAll('[data-mode]').forEach((b) => b.classList.toggle('active', b.dataset.mode === 'CPU'));
+    if (gameState.phase !== 'LOBBY') returnToLobby();
+    renderLobby();
+    updateNetUI();
+    if (was && !byMe) NET_FX.toast('상대와 연결이 끊겼습니다');
+    netStatus(was ? (byMe ? '방에서 나왔습니다.' : '연결이 끊겼습니다. 다시 방을 만들거나 입장하세요.') : '방을 만들거나, 상대의 4자리 코드를 입력해 입장하세요.');
+  }
+
+  function netLeave() {
+    netSend({ t: 'bye' });
+    setTimeout(() => onDisconnected(true), 60);
+  }
+
+  // ---------- 메시지 처리 ----------
+  function onNetMessage(m) {
+    if (!m || typeof m !== 'object') return;
+    if (net.role === 'host') {
+      if (m.t === 'join') {
+        if (!net.connected && net.bc) { net.bc.postMessage({ t: 'welcome' }); onConnected(); }
+        return;
+      }
+      if (!net.connected) return;
+      if (m.t === 'k') hostRemoteKey(m.c, m.d, m.ts);
+      else if (m.t === 'j') net.remoteTouch = { x: +m.x || 0, z: +m.z || 0 };
+      else if (m.t === 'pick') {
+        if (gameState.phase === 'LOBBY' && FIGHTERS[m.id]) {
+          gameState.p2Fighter = m.id;
+          renderLobby();
+          spawnHangarPreview();
+        }
+      } else if (m.t === 'ws') {
+        if (gameState.phase === 'WEAPON_SELECT' && gameState.wsP2Step !== 'DONE' && ATTRIBUTE_ARMS[m.key]) {
+          gameState.wsP2Focus = WEAPON_KEYS.indexOf(m.key);
+          chooseWeaponForSlot('P2', m.key);
+        }
+      } else if (m.t === 'act') {
+        if (m.a === 'rematch' && gameState.phase === 'MATCH_OVER') enterWeaponSelectPhase();
+        else if (m.a === 'lobby' && gameState.phase !== 'LOBBY') returnToLobby();
+      } else if (m.t === 'bye') onDisconnected();
+    } else if (net.role === 'guest') {
+      if (m.t === 'welcome') { onConnected(); return; }
+      if (m.t === 'full') { netStatus('이미 다른 상대가 들어와 있는 방입니다.'); netReset(); updateNetUI(); return; }
+      if (!net.connected) return;
+      if (m.t === 's') guestApplySnapshot(m);
+      else if (m.t === 'bye') onDisconnected();
+    }
+  }
+
+  // 호스트: 게스트가 보낸 키를 2P 조작으로 실행 (게스트의 입력 시각 그대로 사용 → 양손 동시 입력 판정 정확)
+  function hostRemoteKey(code, down, ts) {
+    if (typeof code !== 'string') return;
+    if (down && net.remoteKeys[code]) return;
+    net.remoteKeys[code] = !!down;
+    const ph = gameState.phase;
+    if (ph === 'WEAPON_SELECT') {
+      if (!down || gameState.wsP2Step === 'DONE') return;
+      if (code === 'ArrowLeft') { gameState.wsP2Focus = (gameState.wsP2Focus + 3) % 4; renderWeaponSelectUI(); }
+      else if (code === 'ArrowRight') { gameState.wsP2Focus = (gameState.wsP2Focus + 1) % 4; renderWeaponSelectUI(); }
+      else if (code === 'Enter' || code === 'KeyU' || code === 'KeyI') chooseWeaponForSlot('P2', WEAPON_KEYS[gameState.wsP2Focus]);
+      return;
+    }
+    if (ph !== 'FIGHTING' || fighters.length < 2) return;
+    const p2 = fighters[1];
+    const t = typeof ts === 'number' ? ts : performance.now();
+    if (down) {
+      if (code === 'Enter') triggerJump(p2);
+      else if (code === 'KeyK') triggerLowKick(p2);
+      else if (code === 'KeyO') triggerGuardDash(p2);
+      else if (code === 'KeyU') beginArmCharge(p2, 'L', t);
+      else if (code === 'KeyI') beginArmCharge(p2, 'R', t);
+      else if (code === 'KeyL') triggerRush(p2);
+    } else {
+      if (code === 'KeyU') releaseArmPunch(p2, 'L');
+      else if (code === 'KeyI') releaseArmPunch(p2, 'R');
+    }
+  }
+
+  // 게스트: 입력 전송 헬퍼
+  function guestSendKey(rawCode, down, ts) {
+    const mc = GUEST_KEYMAP[rawCode] || rawCode;
+    netSend({ t: 'k', c: mc, d: down ? 1 : 0, ts });
+  }
+  function guestSendJoy(force = false) {
+    const now = performance.now();
+    if (!force && now - net.joySent < 40) return;
+    net.joySent = now;
+    netSend({ t: 'j', x: Math.round(touchInput.x * 100) / 100, z: Math.round(touchInput.z * 100) / 100 });
+  }
+
+  // ---------- 이펙트·사운드 중계 (호스트에서 일어난 연출을 게스트 화면에도 재생) ----------
+  const NET_FX = {};
+  function netEnc(a) {
+    if (a && a.isVector3) return { __v: [Math.round(a.x * 1000) / 1000, Math.round(a.y * 1000) / 1000, Math.round(a.z * 1000) / 1000] };
+    return a;
+  }
+  function netDec(a) {
+    if (a && a.__v) return new THREE.Vector3(a.__v[0], a.__v[1], a.__v[2]);
+    return a;
+  }
+  function netWrap(name, fn) {
+    NET_FX[name] = fn;
+    return function (...args) {
+      if (isHost() && net.fxDepth === 0) net.fxQueue.push([name, args.map(netEnc)]);
+      net.fxDepth++;
+      try { return fn.apply(this, args); } finally { net.fxDepth--; }
+    };
+  }
+  showToast = netWrap('toast', showToast);
+  showBanner = netWrap('banner', showBanner);
+  spawnShockwave = netWrap('shock', spawnShockwave);
+  spawnBurstSparks = netWrap('sparks', spawnBurstSparks);
+  spawnTrailParticle = netWrap('trail', spawnTrailParticle);
+  spawnDashGhost = netWrap('ghost', spawnDashGhost);
+  spawnImpactFlash = netWrap('impactfx', spawnImpactFlash);
+  spawnDamagePopup = netWrap('popup', spawnDamagePopup);
+  screenFlash = netWrap('flash', screenFlash);
+  spawnLightning = netWrap('bolt', spawnLightning);
+  hideComboMeters = netWrap('combohide', hideComboMeters);
+  sfx.play = netWrap('sfx', sfx.play.bind(sfx));
+  sfx.impact = netWrap('impact', sfx.impact.bind(sfx));
+  {
+    const origCombo = showComboMeter;
+    NET_FX.combo = (slot, count, techs) => origCombo({ slot, comboCount: count }, techs || []);
+    showComboMeter = function (f, techs) {
+      if (isHost() && net.fxDepth === 0) net.fxQueue.push(['combo', [f.slot, f.comboCount, techs]]);
+      return origCombo(f, techs);
+    };
+  }
+
+  // ---------- 호스트 → 게스트 스냅샷 ----------
+  const r3 = (n) => Math.round((n || 0) * 1000) / 1000;
+  function netEncFighter(f) {
+    const arm = (a) => [a.state, r3(a.worldPos.x), r3(a.worldPos.y), r3(a.worldPos.z),
+      r3(a.curveOffset.x), r3(a.curveOffset.y), r3(a.curveOffset.z), a.isCharged ? 1 : 0, a.weaponId];
+    return {
+      id: f.id, p: [r3(f.pos.x), r3(f.pos.y), r3(f.pos.z)], y: r3(f.yaw),
+      hp: r3(f.hp), mh: f.maxHp, ru: r3(f.rush), gd: f.guarding ? 1 : 0, st: r3(f.stunTimer),
+      ch: r3(f.chillTimer), hf: r3(f.hitFlashTimer), sq: r3(f.squash), an: f.animState, dt: r3(f.dashTimer),
+      jc: f.jumpCount, ls: r3(f.lastStand), pr: f.powerReady ? 1 : 0, gc: r3(f.guardCharge),
+      ks: f.kickState, cc: f.comboCount, L: arm(f.arms.L), R: arm(f.arms.R)
+    };
+  }
+  function netBuildSnapshot() {
+    const G = gameState;
+    const snap = {
+      t: 's',
+      g: {
+        ph: G.phase, tm: G.timer, w1: G.p1Wins, w2: G.p2Wins, rn: G.roundNumber, st: G.stage,
+        f1: G.p1Fighter, f2: G.p2Fighter, l1: G.p1LeftWeapon, r1: G.p1RightWeapon, l2: G.p2LeftWeapon, r2: G.p2RightWeapon,
+        ws1: G.wsP1Step, ws2: G.wsP2Step, wf2: G.wsP2Focus,
+        s1: r3(G.shakeP1), s2: r3(G.shakeP2), k1: r3(G.kickP1), k2: r3(G.kickP2)
+      },
+      fx: net.fxQueue
+    };
+    net.fxQueue = [];
+    if (G.phase === 'MATCH_OVER') snap.g.rd = document.getElementById('res-desc').textContent;
+    if (fighters.length === 2 && G.phase !== 'LOBBY') snap.f = fighters.map(netEncFighter);
+    return snap;
+  }
+  // 실제 시간 기준으로 전송 (기기가 느려 프레임이 떨어져도 전송 주기 유지)
+  function netHostTick() {
+    if (!isHost()) return;
+    const now = performance.now();
+    const interval = gameState.phase === 'LOBBY' ? 200 : 33;
+    if (now - net.sendAccum >= interval) {
+      net.sendAccum = now;
+      netSend(netBuildSnapshot());
+    }
+  }
+
+  // ---------- 게스트: 스냅샷 적용 ----------
+  function guestApplyFighter(f, d) {
+    if (!f || !d || f.id !== d.id) return;
+    if (!f._tp) f._tp = new THREE.Vector3();
+    f._tp.set(d.p[0], d.p[1], d.p[2]);
+    if (f.pos.distanceTo(f._tp) > 3) f.pos.copy(f._tp);
+    f._ty = d.y;
+    f.hp = d.hp; f.maxHp = d.mh; f.rush = d.ru; f.guarding = !!d.gd; f.stunTimer = d.st;
+    f.chillTimer = d.ch; f.hitFlashTimer = d.hf; f.squash = d.sq; f.animState = d.an; f.dashTimer = d.dt;
+    f.jumpCount = d.jc; f.lastStand = d.ls; f.powerReady = !!d.pr; f.guardCharge = d.gc;
+    f.kickState = d.ks; f.comboCount = d.cc;
+    ['L', 'R'].forEach((s) => {
+      const a = f.arms[s];
+      const v = d[s];
+      if (!v) return;
+      if (a.weaponId !== v[8] && ATTRIBUTE_ARMS[v[8]]) {
+        a.weaponId = v[8];
+        a.weapon = ATTRIBUTE_ARMS[v[8]];
+        f.rig[s === 'L' ? 'leftArm' : 'rightArm'].setWeapon(v[8]);
+      }
+      const wasOut = a.state === 'EXTENDING' || a.state === 'RETRACTING' || a.state === 'HOLD';
+      a.state = v[0];
+      a.isCharged = !!v[7];
+      if (!a._tp) a._tp = new THREE.Vector3();
+      a._tp.set(v[1], v[2], v[3]);
+      a.curveOffset.set(v[4], v[5], v[6]);
+      if (!wasOut) a.worldPos.copy(a._tp);
+    });
+  }
+
+  function guestOnPhase(ph, prev, g) {
+    const resultEl = document.getElementById('result-overlay');
+    if (ph === 'LOBBY') {
+      returnToLobby();
+      renderLobby();
+      return;
+    }
+    if (ph === 'WEAPON_SELECT') {
+      enterWeaponSelectPhase();
+      return;
+    }
+    if ((ph === 'INTRO' || ph === 'FIGHTING') && prev !== 'INTRO' && prev !== 'FIGHTING') {
+      resultEl.classList.add('hidden');
+      document.getElementById('lobby-overlay').classList.add('hidden');
+      document.getElementById('weapon-select-overlay').classList.add('hidden');
+      spawnMatchFighters();
+      setupBattleHUD();
+    }
+    if (ph === 'MATCH_OVER') {
+      const iWon = g.w2 >= gameState.roundsToWin;
+      document.getElementById('res-heading').textContent = iWon ? 'YOU WIN! 🏆' : 'YOU LOSE…';
+      document.getElementById('res-desc').textContent = g.rd || '';
+      resultEl.classList.remove('hidden');
+    } else {
+      resultEl.classList.add('hidden');
+    }
+  }
+
+  function guestApplySnapshot(m) {
+    const g = m.g;
+    if (!g) return;
+    const G = gameState;
+    const cfgChanged = G.p1Fighter !== g.f1 || G.p2Fighter !== g.f2;
+    Object.assign(G, {
+      p1Fighter: g.f1, p2Fighter: g.f2, p1LeftWeapon: g.l1, p1RightWeapon: g.r1,
+      p2LeftWeapon: g.l2, p2RightWeapon: g.r2, roundNumber: g.rn, p1Wins: g.w1, p2Wins: g.w2,
+      timer: g.tm, shakeP1: g.s1, shakeP2: g.s2, kickP1: g.k1, kickP2: g.k2
+    });
+    if (g.st && g.st !== currentStageId) {
+      G.stage = g.st;
+      buildStage(g.st);
+      document.querySelectorAll('[data-stage]').forEach((b) => b.classList.toggle('active', b.dataset.stage === g.st));
+    }
+    const prev = net.lastPhase;
+    if (g.ph !== prev) {
+      net.lastPhase = g.ph;
+      guestOnPhase(g.ph, prev, g);
+    } else if (g.ph === 'LOBBY' && cfgChanged) {
+      renderLobby();
+      spawnHangarPreview();
+    }
+    G.phase = g.ph;
+
+    if (g.ph === 'WEAPON_SELECT' && (G.wsP1Step !== g.ws1 || G.wsP2Step !== g.ws2 || G.wsP2Focus !== g.wf2)) {
+      G.wsP1Step = g.ws1; G.wsP2Step = g.ws2; G.wsP2Focus = g.wf2;
+      renderWeaponSelectUI();
+    }
+    if (m.f && fighters.length === 2) {
+      m.f.forEach((d, i) => guestApplyFighter(fighters[i], d));
+      if (g.ph !== 'LOBBY' && g.ph !== 'WEAPON_SELECT') {
+        syncHUD();
+        const cEl = document.getElementById('clock-num');
+        cEl.textContent = String(g.tm).padStart(2, '0');
+        cEl.classList.toggle('urgent', g.tm <= 15);
+      }
+    }
+    (m.fx || []).forEach((e) => {
+      const fn = NET_FX[e[0]];
+      if (fn) { try { fn(...(e[1] || []).map(netDec)); } catch (_) {} }
+    });
+  }
+
+  // 게스트 프레임: 받은 상태를 부드럽게 보간해서 그리기만 함 (판정 계산 없음)
+  function guestFrame(dt) {
+    const k = Math.min(1, dt * 18);
+    fighters.forEach((f) => {
+      if (f._tp) f.pos.lerp(f._tp, k);
+      if (f._ty !== undefined) {
+        let diff = f._ty - f.yaw;
+        while (diff > Math.PI) diff -= Math.PI * 2;
+        while (diff < -Math.PI) diff += Math.PI * 2;
+        f.yaw += diff * k;
+      }
+      ['L', 'R'].forEach((s) => {
+        const a = f.arms[s];
+        if (a._tp && (a.state === 'EXTENDING' || a.state === 'RETRACTING' || a.state === 'HOLD')) {
+          a.worldPos.lerp(a._tp, Math.min(1, dt * 24));
+        }
+        const armRig = f.rig[s === 'L' ? 'leftArm' : 'rightArm'];
+        armRig.chargeSphere.visible = (a.state === 'CHARGING' && a.isCharged) ||
+          (f.powerReady && (a.state === 'IDLE' || a.state === 'CHARGING'));
+        if (armRig.chargeSphere.visible) armRig.chargeSphere.scale.setScalar(0.95 + Math.sin(f.animTime * 24) * 0.14);
+      });
+      f.grabBeam.visible = false;
+      f.animTime += dt;
+      animateRig(f, dt);
+    });
+    updateLastStandUI();
+  }
+
+  // ---------- 로비 UI 바인딩 ----------
+  const codeInput = document.getElementById('net-code-input');
+  codeInput.addEventListener('input', () => {
+    codeInput.value = codeInput.value.replace(/\D/g, '').slice(0, 4);
+  });
+  codeInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); netJoin(codeInput.value); }
+  });
+  document.getElementById('btn-net-host').addEventListener('click', () => { sfx.init(); netHost(); });
+  document.getElementById('btn-net-join').addEventListener('click', () => { sfx.init(); netJoin(codeInput.value); });
+  document.getElementById('btn-net-leave').addEventListener('click', () => netLeave());
+  window.addEventListener('beforeunload', () => { if (net.connected) netSend({ t: 'bye' }); });
+  updateNetUI();
+
 
   // 14. MAIN LOOP
   function onResize() {
@@ -4470,6 +5126,7 @@
     requestAnimationFrame(tick);
     let dt = Math.min(0.05, (now - prevTime) / 1000);
     prevTime = now;
+    netHostTick();
 
     // 경기장 소품 & 대기 입자 애니메이션
     const elapsed = now * 0.001;
@@ -4484,6 +5141,18 @@
         p.mesh.position.y = p.baseY + Math.sin(elapsed * p.speed + p.phase) * 0.65;
         p.mesh.rotation.y += dt * 1.5;
       }
+    }
+
+    // 온라인 게스트: 판정은 호스트가 하므로 받은 상태만 그림
+    if (isGuest()) {
+      if (gameState.phase === 'LOBBY') {
+        fighters.forEach((f) => { f.animTime += dt; animateRig(f, dt); });
+      } else if (fighters.length === 2) {
+        guestFrame(dt);
+      }
+      updateVFX(dt);
+      renderScene(dt);
+      return;
     }
 
     if (gameState.phase === 'FIGHTING' && fighters.length === 2) {
